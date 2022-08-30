@@ -30,11 +30,9 @@ class _LoginPageState extends State<LoginPage> {
   late UserLoginModel _userLogin;
   late UserDao _userDao;
   late GlobalKey<FormState> _formKey;
-
   late SecureStorageHelper _secureStorageHelper;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
-
   late ValueNotifier<bool> _savePassword;
   late ValueNotifier<bool> _passwordVisible;
   late ValueNotifier<bool> _signInloading;
@@ -45,11 +43,9 @@ class _LoginPageState extends State<LoginPage> {
     _userLogin = UserLoginModel(type: UserType.user);
     _userDao = UserDao();
     _formKey = GlobalKey<FormState>();
-
     _secureStorageHelper = SecureStorageHelper();
     _emailController = TextEditingController(text: "");
     _passwordController = TextEditingController(text: "");
-
     _savePassword = ValueNotifier<bool>(false);
     _passwordVisible = ValueNotifier<bool>(false);
     _signInloading = ValueNotifier<bool>(false);
@@ -69,188 +65,200 @@ class _LoginPageState extends State<LoginPage> {
     SizeConfig().init(context);
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Container(
-            width: SizeConfig.screenWidth,
-            padding: EdgeInsets.all(
-                SizeConfig.screenWidth - SizeConfig.screenWidth * .85),
-            alignment: Alignment.center,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: SizeConfig.safeBlockHorizontal * 5,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 5,
+      body: CustomScrollView(
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Form(
+              key: _formKey,
+              child: Container(
+                width: SizeConfig.screenWidth,
+                padding: EdgeInsets.only(
+                  left: SizeConfig.safeBlockHorizontal * 12,
+                  top: SizeConfig.safeBlockVertical * 10,
+                  right: SizeConfig.safeBlockHorizontal * 12,
+                  bottom: SizeConfig.safeBlockVertical * 2,
+                ),
+                alignment: Alignment.center,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: SizeConfig.safeBlockHorizontal * 5,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: SizeConfig.safeBlockHorizontal * 15,
-                        height: SizeConfig.safeBlockVertical * 20,
-                        child:
-                            Image.asset('assets/images/flutter-icon-rmbg.png'),
-                      ),
-                      const Text(
-                        "Contacts\nWelcome back!",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontSize: 25,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            vertical: SizeConfig.safeBlockVertical * 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: SizeConfig.safeBlockHorizontal * 15,
+                              height: SizeConfig.safeBlockVertical * 15,
+                              child: Image.asset(
+                                  'assets/images/flutter-icon-rmbg.png'),
+                            ),
+                            const Text(
+                              "Contacts\nWelcome back!",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 25.0,
+                              ),
+                            )
+                          ],
                         ),
-                      )
+                      ),
+                      SizedBox(
+                        height: SizeConfig.safeBlockVertical * 5,
+                      ),
+                      Observer(
+                        builder: (_) => TextFormField(
+                          validator: emailValidator(),
+                          onChanged: updateEmail,
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: "Email",
+                              hintText: 'Enter valid email as abc@gmail.com'),
+                        ),
+                      ),
+                      SizedBox(
+                        height: SizeConfig.safeBlockVertical * 2,
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: _passwordVisible,
+                        builder: (context, passwordVisible, _) => TextFormField(
+                          obscureText: !_passwordVisible.value,
+                          validator: requiredTextValidator(),
+                          onChanged: updatePassword,
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: "Password",
+                            hintText: 'Enter secure password',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _passwordVisible.value
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Theme.of(context).primaryColorDark,
+                              ),
+                              onPressed: () {
+                                _passwordVisible.value =
+                                    !_passwordVisible.value;
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            vertical: SizeConfig.safeBlockVertical * 2),
+                        child: AnimatedBuilder(
+                            animation: _savePassword,
+                            builder: (context, _) {
+                              return CheckboxListTile(
+                                contentPadding: EdgeInsets.zero,
+                                activeColor: Colors.purple,
+                                value: _savePassword.value,
+                                onChanged: (_) =>
+                                    _savePassword.value = !_savePassword.value,
+                                title: const Text("Remember me"),
+                              );
+                            }),
+                      ),
+                      RaisedGradientButton(
+                        height: SizeConfig.safeBlockVertical * 8,
+                        gradient: const LinearGradient(
+                          colors: [
+                            Colors.purple,
+                            Colors.deepPurple,
+                          ],
+                          begin: Alignment.bottomRight,
+                          end: Alignment.topLeft,
+                        ),
+                        onPressed: () => signIn(),
+                        child: AnimatedBuilder(
+                            animation: _signInloading,
+                            builder: (context, _) {
+                              return _signInloading.value
+                                  ? LoadingHelper.showButtonLoading()
+                                  : const Text(
+                                      'Sign In',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 25.0,
+                                      ),
+                                    );
+                            }),
+                      ),
+                      SizedBox(
+                        height: SizeConfig.safeBlockVertical * 2,
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          NavigatorHelper().navigateToWidget(
+                              context, const RecoverPasswordPage());
+                        },
+                        child: const Text(
+                          'Forgot Password',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 15.0,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              alignment: Alignment.bottomCenter),
+                          onPressed: () => NavigatorHelper().navigateToWidget(
+                              context, CreateAccountStepsPage()),
+                          child: const Text(
+                            'New user? Create Account',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 15.0,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 5,
-                  ),
-                  Observer(
-                    builder: (_) => TextFormField(
-                      validator: emailValidator(),
-                      onChanged: updateEmail,
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "Email",
-                          hintText: 'Enter valid email as abc@gmail.com'),
-                    ),
-                  ),
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 2,
-                  ),
-                  ValueListenableBuilder(
-                    valueListenable: _passwordVisible,
-                    builder: (context, passwordVisible, _) => TextFormField(
-                      obscureText: !_passwordVisible.value,
-                      validator: requiredTextValidator(),
-                      onChanged: updatePassword,
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: "Password",
-                        hintText: 'Enter secure password',
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordVisible.value
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Theme.of(context).primaryColorDark,
-                          ),
-                          onPressed: () {
-                            _passwordVisible.value = !_passwordVisible.value;
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 2,
-                  ),
-                  AnimatedBuilder(
-                      animation: _savePassword,
-                      builder: (context, _) {
-                        return CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
-                          activeColor: Colors.purple,
-                          value: _savePassword.value,
-                          onChanged: (_) =>
-                              _savePassword.value = !_savePassword.value,
-                          title: const Text("Remember me"),
-                        );
-                      }),
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 2,
-                  ),
-                  RaisedGradientButton(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Colors.purple,
-                        Colors.deepPurple,
-                      ],
-                      begin: Alignment.bottomRight,
-                      end: Alignment.topLeft,
-                    ),
-                    child: AnimatedBuilder(
-                        animation: _signInloading,
-                        builder: (context, _) {
-                          return _signInloading.value
-                              ? LoadingHelper.showButtonLoading()
-                              : const Text(
-                                  'Sign In',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 25,
-                                  ),
-                                );
-                        }),
-                    onPressed: () {
-                      _signInloading.value = !_signInloading.value;
-
-                      if (_formKey.currentState!.validate()) {
-                        signIn();
-                      }
-
-                      _signInloading.value = !_signInloading.value;
-                    },
-                  ),
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 2,
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      NavigatorHelper().navigateToWidget(
-                          context, const RecoverPasswordPage());
-                    },
-                    child: const Text(
-                      'Forgot Password',
-                      style: TextStyle(color: Colors.blue, fontSize: 15),
-                    ),
-                  ),
-                  SizedBox(
-                    height: SizeConfig.safeBlockVertical * 10,
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      NavigatorHelper()
-                          .navigateToWidget(context, CreateAccountStepsPage());
-                    },
-                    child: const Text(
-                      'New user? Create Account',
-                      style: TextStyle(color: Colors.blue, fontSize: 15),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          )
+        ],
       ),
     );
   }
 
-  signIn() {
-    _userLogin.password = EncrypterHelper.encrypt(_userLogin.password!);
+  void signIn() {
+    if (_formKey.currentState!.validate()) {
+      _signInloading.value = !_signInloading.value;
 
-    _userDao.signIn(_userLogin).then((userSignedIn) {
-      if (userSignedIn != null) {
-        saveToSecureStorage(userSignedIn);
+      _userLogin.password = EncrypterHelper.encrypt(_userLogin.password!);
 
-        NavigatorHelper().navigateToWidget(context, const ListContactPage(),
-            removeUntil: true);
-      } else {
-        MessageHelper.showErrorMessage(
-          context,
-          "User email or password incorrect!",
-        );
-      }
-    });
+      _userDao.signIn(_userLogin).then((userSignedIn) {
+        if (userSignedIn != null) {
+          saveToSecureStorage(userSignedIn).then((_) => NavigatorHelper()
+              .navigateToWidget(context, const ListContactPage(),
+                  removeUntil: true));
+        } else {
+          _signInloading.value = !_signInloading.value;
+
+          MessageHelper.showErrorMessage(
+            context,
+            "User email or password incorrect!",
+          );
+        }
+      });
+    }
   }
 
-  saveToSecureStorage(User userSignedIn) async {
+  Future<void> saveToSecureStorage(User userSignedIn) async {
     await _secureStorageHelper.write(
         "REMEMBER_ME", _savePassword.value.toString().toLowerCase());
     await _secureStorageHelper.write("USER", jsonEncode(userSignedIn.toJson()));
@@ -262,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  readFromSecureStorage() async {
+  Future<void> readFromSecureStorage() async {
     _savePassword.value =
         (await _secureStorageHelper.read("REMEMBER_ME") ?? "false") == "true";
 

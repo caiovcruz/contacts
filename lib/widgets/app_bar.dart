@@ -27,7 +27,7 @@ AppBar getEditingAppBar(BuildContext context, String pageName,
     {String? leadingText, Function? leadingFunction, List<Widget>? actions}) {
   return AppBar(
     automaticallyImplyLeading: false,
-    leadingWidth: 70,
+    leadingWidth: 70.0,
     leading: TextButton(
       onPressed: leadingFunction != null
           ? leadingFunction.call()

@@ -16,7 +16,9 @@ import '../helpers/encrypter_helper.dart';
 import '../helpers/image_picker_helper.dart';
 import '../helpers/navigator_helper.dart';
 import '../helpers/secure_storage_helper.dart';
+import '../helpers/size_config.dart';
 import '../helpers/user_gender_helper.dart';
+import '../models/user.dart';
 import '../models/user_gender.dart';
 import '../validators/user_gender_field_validator.dart';
 import '../widgets/app_bar.dart';
@@ -52,7 +54,7 @@ class _AccountPagePageState extends State<AccountPage>
   late ValueNotifier<bool> _oldPasswordVisible;
   late ValueNotifier<bool> _passwordVisible;
   late ValueNotifier<bool> _confirmPasswordVisible;
-  late ValueNotifier<bool> _createLoading;
+  late ValueNotifier<bool> _updateLoading;
   late ValueNotifier<bool> _camLoading;
   late ValueNotifier<File?> _imageFile;
   late TextEditingController _dateOfBirthTextController;
@@ -71,7 +73,7 @@ class _AccountPagePageState extends State<AccountPage>
     _oldPasswordVisible = ValueNotifier<bool>(false);
     _passwordVisible = ValueNotifier<bool>(false);
     _confirmPasswordVisible = ValueNotifier<bool>(false);
-    _createLoading = ValueNotifier<bool>(false);
+    _updateLoading = ValueNotifier<bool>(false);
     _camLoading = ValueNotifier<bool>(false);
     _imageFile = ValueNotifier<File?>(null);
     _dateOfBirthTextController = TextEditingController(
@@ -88,6 +90,8 @@ class _AccountPagePageState extends State<AccountPage>
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
+
     ValueNotifier<bool> isDarkTheme = ValueNotifier<bool>(
         Provider.of<DarkThemeProvider>(context, listen: false).darkTheme);
 
@@ -100,9 +104,15 @@ class _AccountPagePageState extends State<AccountPage>
           context,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: getAccountTabs(isDarkTheme),
+      body: Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: SizeConfig.safeBlockVertical * 3,
+          horizontal: SizeConfig.safeBlockVertical * 3,
+        ),
+        child: TabBarView(
+          controller: _tabController,
+          children: getAccountTabs(isDarkTheme),
+        ),
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -120,7 +130,10 @@ class _AccountPagePageState extends State<AccountPage>
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorSize: TabBarIndicatorSize.label,
-          indicatorPadding: const EdgeInsets.all(5.0),
+          indicatorPadding: EdgeInsets.symmetric(
+            vertical: SizeConfig.safeBlockVertical * 1,
+            horizontal: SizeConfig.safeBlockVertical * 1,
+          ),
           indicatorColor: Colors.white,
           tabs: const [
             Tab(
@@ -149,104 +162,94 @@ class _AccountPagePageState extends State<AccountPage>
       body: SingleChildScrollView(
         child: Form(
           key: _accountFormKey,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 10,
-              children: <Widget>[
-                Observer(
+          child: Wrap(
+            spacing: 20.0,
+            runSpacing: 15.0,
+            children: <Widget>[
+              Observer(
+                builder: (_) => TextFormField(
+                  validator: emailValidator(),
+                  onChanged: updateEmail,
+                  initialValue: _userAccount.email,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "E-mail *",
+                  ),
+                ),
+              ),
+              ValueListenableBuilder(
+                valueListenable: _oldPasswordVisible,
+                builder: (context, oldPasswordVisible, _) => TextFormField(
+                  obscureText: !_oldPasswordVisible.value,
+                  validator: passwordValidator(),
+                  onChanged: (oldPassword) => _oldPassword.value = oldPassword,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText:
+                        "Old Password ${_userAccount.id != null ? '' : '*'}",
+                    hintText: 'Enter secure old password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _oldPasswordVisible.value
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Theme.of(context).primaryColorDark,
+                      ),
+                      onPressed: () => _oldPasswordVisible.value =
+                          !_oldPasswordVisible.value,
+                    ),
+                  ),
+                ),
+              ),
+              ValueListenableBuilder(
+                valueListenable: _passwordVisible,
+                builder: (context, passwordVisible, _) => Observer(
                   builder: (_) => TextFormField(
-                    validator: emailValidator(),
-                    onChanged: updateEmail,
-                    initialValue: _userAccount.email,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "E-mail *",
-                    ),
-                  ),
-                ),
-                ValueListenableBuilder(
-                  valueListenable: _oldPasswordVisible,
-                  builder: (context, oldPasswordVisible, _) => TextFormField(
-                    obscureText: !_oldPasswordVisible.value,
+                    obscureText: !_passwordVisible.value,
                     validator: passwordValidator(),
-                    onChanged: (oldPassword) =>
-                        _oldPassword.value = oldPassword,
+                    onChanged: updatePassword,
                     decoration: InputDecoration(
                       border: const OutlineInputBorder(),
-                      labelText:
-                          "Old Password ${_userAccount.id != null ? '' : '*'}",
-                      hintText: 'Enter secure old password',
+                      labelText: "Password",
+                      hintText: 'Enter secure password',
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _oldPasswordVisible.value
+                          _passwordVisible.value
                               ? Icons.visibility
                               : Icons.visibility_off,
                           color: Theme.of(context).primaryColorDark,
                         ),
-                        onPressed: () {
-                          _oldPasswordVisible.value =
-                              !_oldPasswordVisible.value;
-                        },
+                        onPressed: () =>
+                            _passwordVisible.value = !_passwordVisible.value,
                       ),
                     ),
                   ),
                 ),
-                ValueListenableBuilder(
-                  valueListenable: _passwordVisible,
-                  builder: (context, passwordVisible, _) => Observer(
-                    builder: (_) => TextFormField(
-                      obscureText: !_passwordVisible.value,
-                      validator: passwordValidator(),
-                      onChanged: updatePassword,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: "Password",
-                        hintText: 'Enter secure password',
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordVisible.value
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Theme.of(context).primaryColorDark,
-                          ),
-                          onPressed: () {
-                            _passwordVisible.value = !_passwordVisible.value;
-                          },
-                        ),
+              ),
+              ValueListenableBuilder(
+                valueListenable: _confirmPasswordVisible,
+                builder: (context, confirmPasswordVisible, _) => TextFormField(
+                  obscureText: !_confirmPasswordVisible.value,
+                  validator: (confirmPassword) =>
+                      confirmPasswordValidator(confirmPassword),
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: "Confirm Password",
+                    hintText: 'Re-enter secure password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _confirmPasswordVisible.value
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Theme.of(context).primaryColorDark,
                       ),
+                      onPressed: () => _confirmPasswordVisible.value =
+                          !_confirmPasswordVisible.value,
                     ),
                   ),
                 ),
-                ValueListenableBuilder(
-                  valueListenable: _confirmPasswordVisible,
-                  builder: (context, confirmPasswordVisible, _) =>
-                      TextFormField(
-                    obscureText: !_confirmPasswordVisible.value,
-                    validator: (confirmPassword) =>
-                        confirmPasswordValidator(confirmPassword),
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      labelText: "Confirm Password",
-                      hintText: 'Re-enter secure password',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _confirmPasswordVisible.value
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Theme.of(context).primaryColorDark,
-                        ),
-                        onPressed: () {
-                          _confirmPasswordVisible.value =
-                              !_confirmPasswordVisible.value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -258,89 +261,86 @@ class _AccountPagePageState extends State<AccountPage>
       body: SingleChildScrollView(
         child: Form(
           key: _detailsFormKey,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 10,
-              children: <Widget>[
-                Row(
-                  children: [
-                    FutureBuilder<void>(
-                        future:
-                            getProfileImageFile(_userDetails.profileImagePath),
-                        builder: (context, _) {
-                          return ValueListenableBuilder(
-                              valueListenable: _imageFile,
-                              builder: (context, imageFile, _) {
-                                return getProfileImage(isDarkTheme.value);
-                              });
-                        }),
-                    Expanded(
-                      child: Wrap(
-                        spacing: 20,
-                        runSpacing: 10,
-                        children: [
-                          Observer(
-                            builder: (_) => TextFormField(
-                              validator: nameValidator(),
-                              onChanged: updateName,
-                              initialValue: _userDetails.name,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: "Name *",
-                              ),
+          child: Wrap(
+            spacing: 20.0,
+            runSpacing: 15.0,
+            children: <Widget>[
+              Row(
+                children: [
+                  FutureBuilder<void>(
+                      future:
+                          getProfileImageFile(_userDetails.profileImagePath),
+                      builder: (context, _) {
+                        return ValueListenableBuilder(
+                            valueListenable: _imageFile,
+                            builder: (context, imageFile, _) {
+                              return getProfileImage(isDarkTheme.value);
+                            });
+                      }),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 20.0,
+                      runSpacing: 15.0,
+                      children: [
+                        Observer(
+                          builder: (_) => TextFormField(
+                            validator: nameValidator(),
+                            onChanged: updateName,
+                            initialValue: _userDetails.name,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: "Name *",
                             ),
                           ),
-                          TextFormField(
-                            controller: _dateOfBirthTextController,
-                            readOnly: true,
-                            validator: requiredTextValidator(),
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              labelText: "Date of birth *",
-                              suffixIcon: Icon(
-                                Icons.calendar_today,
-                                color: Theme.of(context).primaryColorDark,
-                              ),
+                        ),
+                        TextFormField(
+                          controller: _dateOfBirthTextController,
+                          readOnly: true,
+                          validator: requiredTextValidator(),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: "Date of birth *",
+                            suffixIcon: Icon(
+                              Icons.calendar_today,
+                              color: Theme.of(context).primaryColorDark,
                             ),
-                            onTap: () => showDateTimePicker(),
                           ),
-                        ],
-                      ),
+                          onTap: () => showDateTimePicker(),
+                        ),
+                      ],
                     ),
+                  ),
+                ],
+              ),
+              Observer(
+                builder: (_) => DropdownButtonFormField(
+                  value: _userDetails.gender,
+                  validator: genderValidator(),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Gender *",
+                  ),
+                  items: bindTypes(),
+                  onChanged: updateGender,
+                ),
+              ),
+              Observer(
+                builder: (_) => TextFormField(
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    TelefoneInputFormatter()
                   ],
-                ),
-                Observer(
-                  builder: (_) => DropdownButtonFormField(
-                    value: _userDetails.gender,
-                    validator: genderValidator(),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Gender *",
-                    ),
-                    items: bindTypes(),
-                    onChanged: updateGender,
+                  keyboardType: TextInputType.number,
+                  validator: requiredTextValidator(),
+                  onChanged: updatePhone,
+                  initialValue: _userDetails.phone,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Phone *",
                   ),
                 ),
-                Observer(
-                  builder: (_) => TextFormField(
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      TelefoneInputFormatter()
-                    ],
-                    keyboardType: TextInputType.number,
-                    validator: requiredTextValidator(),
-                    onChanged: updatePhone,
-                    initialValue: _userDetails.phone,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Phone *",
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -352,7 +352,7 @@ class _AccountPagePageState extends State<AccountPage>
     showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
-        height: 250,
+        height: SizeConfig.safeBlockVertical * 32,
         color: Colors.white,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -377,7 +377,7 @@ class _AccountPagePageState extends State<AccountPage>
               ],
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.25,
+              height: SizeConfig.safeBlockVertical * 22,
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.date,
                 initialDateTime: _userDetails.dateOfBirth ?? DateTime.now(),
@@ -399,9 +399,9 @@ class _AccountPagePageState extends State<AccountPage>
   Widget getDoneButton(BuildContext context) {
     return TextButton(
       child: AnimatedBuilder(
-          animation: _createLoading,
+          animation: _updateLoading,
           builder: (context, _) {
-            return _createLoading.value
+            return _updateLoading.value
                 ? LoadingHelper.showButtonLoading()
                 : const Text(
                     "Done",
@@ -416,55 +416,63 @@ class _AccountPagePageState extends State<AccountPage>
   }
 
   void manageUser(BuildContext context) {
-    _createLoading.value = !_createLoading.value;
-
     if (_tabController.index == 0) {
-      if (_detailsFormKey.currentState!.validate()) {
-        if (_imageFile.value != null) {
-          _userDetails.profileImagePath = "${const Uuid().v1()}${path.extension(_imageFile.value!.path)}";
-
-          ImagePickerHelper.saveFileToExStorage(_userDetails.profileImagePath!,
-              _imageFile.value!, ImagePickerHelper.getProfileImageFilesPath());
-        }
-
-        _userDao
-            .save(_userDetails.toUser())
-            .then((userId) => MessageHelper.showSuccessMessage(
-                  context,
-                  "User updated!",
-                ));
-
-        _secureStorageHelper.write("USER", jsonEncode(_userDetails.toJson()));
-      }
+      updateDetails(context);
     } else {
-      if (_accountFormKey.currentState!.validate()) {
-        _userDao
-            .userExists(_userAccount.id, _userAccount.email!)
-            .then((exists) {
-          if (!exists) {
-            _userAccount.password =
-                EncrypterHelper.encrypt(_userAccount.password!);
-
-            _userDao
-                .save(_userAccount.toUser())
-                .then((userId) => MessageHelper.showSuccessMessage(
-                      context,
-                      "User updated!",
-                    ));
-
-            _secureStorageHelper.write(
-                "USER", jsonEncode(_userAccount.toJson()));
-          } else {
-            MessageHelper.showErrorMessage(
-              context,
-              "User email ${_userAccount.email!} already exists!",
-            );
-          }
-        });
-      }
+      updateAccount(context);
     }
+  }
 
-    _createLoading.value = !_createLoading.value;
+  void updateAccount(BuildContext context) {
+    if (_accountFormKey.currentState!.validate()) {
+      _updateLoading.value = !_updateLoading.value;
+
+      _userDao.userExists(_userAccount.id, _userAccount.email!).then((exists) {
+        if (!exists) {
+          _userAccount.password =
+              EncrypterHelper.encrypt(_userAccount.password!);
+
+          _userDao.save(_userAccount.toUser()).then((userId) {
+            updateSecureStorage(_userAccount, _userDetails);
+          });
+        } else {
+          _updateLoading.value = !_updateLoading.value;
+
+          MessageHelper.showErrorMessage(
+            context,
+            "User email ${_userAccount.email!} already exists!",
+          );
+        }
+      });
+    }
+  }
+
+  void updateDetails(BuildContext context) {
+    if (_detailsFormKey.currentState!.validate()) {
+      if (_imageFile.value != null) {
+        _userDetails.profileImagePath =
+            "${const Uuid().v1()}${path.extension(_imageFile.value!.path)}";
+
+        ImagePickerHelper.saveFileToExStorage(_userDetails.profileImagePath!,
+            _imageFile.value!, ImagePickerHelper.getProfileImageFilesPath());
+      }
+
+      _userDao.save(_userDetails.toUser()).then((userId) {
+        updateSecureStorage(_userDetails, _userAccount);
+      });
+    }
+  }
+
+  void updateSecureStorage(userToWrite, userToRead) {
+    _secureStorageHelper
+        .write("USER", jsonEncode(userToWrite.toJson()))
+        .then((_) => MessageHelper.showSuccessMessage(
+              context,
+              "User updated!",
+            ));
+
+    _secureStorageHelper.read("USER").then((userJson) => userToRead =
+        BaseUserModel.fromUser(User.fromJson(jsonDecode(userJson!))));
   }
 
   void updateName(name) {
@@ -548,14 +556,16 @@ class _AccountPagePageState extends State<AccountPage>
   Widget getProfileImage(isDarkTheme) {
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: Center(
+        Center(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: SizeConfig.safeBlockVertical * 2,
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(3.0), //or 15.0
               child: Container(
-                height: 130.0,
-                width: 130.0,
+                height: SizeConfig.safeBlockVertical * 20,
+                width: SizeConfig.safeBlockHorizontal * 30,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -567,8 +577,8 @@ class _AccountPagePageState extends State<AccountPage>
                   ),
                 ),
                 child: SizedBox(
-                  height: 100.0,
-                  width: 100.0,
+                  height: SizeConfig.safeBlockVertical * 10,
+                  width: SizeConfig.safeBlockHorizontal * 10,
                   child: Observer(
                     builder: (_) => Image(
                       fit: BoxFit.cover,
@@ -586,13 +596,16 @@ class _AccountPagePageState extends State<AccountPage>
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 105, left: 55),
+          padding: EdgeInsets.only(
+            top: SizeConfig.safeBlockVertical * 16,
+            left: SizeConfig.safeBlockHorizontal * 13,
+          ),
           child: Center(
             child: CircleAvatar(
-              radius: 15,
+              radius: 15.0,
               backgroundColor: isDarkTheme ? Colors.grey[850] : Colors.grey[50],
               child: IconButton(
-                iconSize: 15,
+                iconSize: 15.0,
                 icon: Icon(
                   Icons.photo_camera,
                   color: isDarkTheme ? Colors.grey[50] : Colors.grey[850],
@@ -611,14 +624,16 @@ class _AccountPagePageState extends State<AccountPage>
                               ),
                             ),
                           ),
-                          contentPadding: const EdgeInsets.all(8.0),
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: SizeConfig.safeBlockVertical * 1,
+                            horizontal: SizeConfig.safeBlockHorizontal * 2,
+                          ),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: <Widget>[
                               RaisedGradientButton(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.050,
+                                height: SizeConfig.safeBlockVertical * 5,
                                 gradient: const LinearGradient(
                                   colors: [
                                     Colors.purple,
@@ -647,11 +662,10 @@ class _AccountPagePageState extends State<AccountPage>
                                     if (value != null) {
                                       _imageFile.value = value;
                                     }
+                                  }).whenComplete(() {
+                                    _camLoading.value = !_camLoading.value;
+                                    NavigatorHelper().popRoute(dialogContext);
                                   });
-
-                                  _camLoading.value = !_camLoading.value;
-
-                                  NavigatorHelper().popRoute(dialogContext);
                                 },
                               ),
                               OutlinedButton(
@@ -673,12 +687,7 @@ class _AccountPagePageState extends State<AccountPage>
                                             );
                                     }),
                                 onPressed: () {
-                                  _camLoading.value = !_camLoading.value;
-
                                   _imageFile.value = null;
-
-                                  _camLoading.value = !_camLoading.value;
-
                                   NavigatorHelper().popRoute(dialogContext);
                                 },
                               ),

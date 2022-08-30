@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LoadingHelper {
-  static SizedBox showButtonLoading({Color? widgetColor}) {
+  static Widget showButtonLoading({Color? widgetColor}) {
     return SizedBox(
       width: 20,
       height: 20,
@@ -9,9 +9,11 @@ class LoadingHelper {
     );
   }
 
-  static CircularProgressIndicator showLoading({Color? widgetColor}) {
-    return CircularProgressIndicator(
-      color: widgetColor,
+  static Widget showLoading({Color? widgetColor}) {
+    return Center(
+      child: CircularProgressIndicator(
+        color: widgetColor,
+      ),
     );
   }
 }

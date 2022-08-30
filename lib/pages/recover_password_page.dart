@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 
 import '../helpers/navigator_helper.dart';
+import '../helpers/size_config.dart';
 import '../widgets/app_bar.dart';
 import '../helpers/loading_helper.dart';
 import '../helpers/message_helper.dart';
@@ -18,7 +19,6 @@ class RecoverPasswordPage extends StatefulWidget {
 class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
   late UserDao _userDao;
   late GlobalKey<FormState> _formKey;
-
   late ValueNotifier<String> _email;
   late ValueNotifier<bool> _recoverloading;
 
@@ -27,13 +27,14 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
     super.initState();
     _userDao = UserDao();
     _formKey = GlobalKey<FormState>();
-
     _email = ValueNotifier<String>("");
     _recoverloading = ValueNotifier<bool>(false);
   }
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
+
     return Scaffold(
       appBar: getEditingAppBar(
         context,
@@ -43,13 +44,16 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            vertical: SizeConfig.safeBlockVertical * 3,
+            horizontal: SizeConfig.safeBlockVertical * 3,
+          ),
+          child: Form(
+            key: _formKey,
             child: Wrap(
-              spacing: 20,
-              runSpacing: 10,
+              spacing: 20.0,
+              runSpacing: 15.0,
               children: <Widget>[
                 const Text("Please enter your account email."),
                 ValueListenableBuilder(
@@ -94,9 +98,9 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                   );
           }),
       onPressed: () {
-        _recoverloading.value = !_recoverloading.value;
-
         if (_formKey.currentState!.validate()) {
+          _recoverloading.value = !_recoverloading.value;
+
           _userDao.getByEmail(_email.value).then((user) {
             if (user != null) {
               Email.sendEmail(
@@ -104,13 +108,16 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
                 user.email!,
                 Email.recoverPasswordSuject,
                 Email.recoverPasswordMessage(user.password!),
-              );
+              ).whenComplete(() {
+                MessageHelper.showSuccessMessage(
+                    context, "Email sent successfully!");
 
-              MessageHelper.showSuccessMessage(context, "Email sent successfully!");
-
-              NavigatorHelper()
-                  .navigateToRoute(context, "/", removeUntil: true);
+                NavigatorHelper()
+                    .navigateToRoute(context, "/", removeUntil: true);
+              });
             } else {
+              _recoverloading.value = !_recoverloading.value;
+
               MessageHelper.showErrorMessage(
                 context,
                 "User email ${_email.value} does not exists!",
@@ -118,8 +125,6 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
             }
           });
         }
-
-        _recoverloading.value = !_recoverloading.value;
       },
     );
   }

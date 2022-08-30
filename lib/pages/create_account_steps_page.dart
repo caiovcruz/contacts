@@ -16,6 +16,7 @@ import '../helpers/image_picker_helper.dart';
 import '../helpers/loading_helper.dart';
 import '../helpers/message_helper.dart';
 import '../helpers/navigator_helper.dart';
+import '../helpers/size_config.dart';
 import '../helpers/user_gender_helper.dart';
 import '../models/user_gender.dart';
 import '../models/user_model.dart';
@@ -42,8 +43,7 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
   late ValueNotifier<bool> _passwordVisible;
   late ValueNotifier<bool> _confirmPasswordVisible;
   late ValueNotifier<int> _currentStep;
-  late ValueNotifier<bool> _backLoading;
-  late ValueNotifier<bool> _nextLoading;
+  late ValueNotifier<bool> _createLoading;
   late ValueNotifier<bool> _camLoading;
   late GlobalKey<FormState> _accountFormKey;
   late GlobalKey<FormState> _detailsFormKey;
@@ -58,8 +58,7 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
     _passwordVisible = ValueNotifier<bool>(false);
     _confirmPasswordVisible = ValueNotifier<bool>(false);
     _currentStep = ValueNotifier<int>(0);
-    _backLoading = ValueNotifier<bool>(false);
-    _nextLoading = ValueNotifier<bool>(false);
+    _createLoading = ValueNotifier<bool>(false);
     _camLoading = ValueNotifier<bool>(false);
     _accountFormKey = GlobalKey<FormState>();
     _detailsFormKey = GlobalKey<FormState>();
@@ -69,6 +68,8 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
+
     ValueNotifier<bool> isDarkTheme = ValueNotifier<bool>(
         Provider.of<DarkThemeProvider>(context, listen: false).darkTheme);
 
@@ -114,33 +115,21 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                     width: 1,
                     color: Colors.grey[500]!,
                     style: BorderStyle.solid)),
-            child: AnimatedBuilder(
-                animation: _backLoading,
-                builder: (context, _) {
-                  return _backLoading.value
-                      ? LoadingHelper.showButtonLoading()
-                      : Text(
-                          'BACK',
-                          style: TextStyle(
-                            color: Colors.grey[500]!,
-                          ),
-                        );
-                }),
-            onPressed: () {
-              _backLoading.value = !_backLoading.value;
-
-              details.onStepCancel?.call();
-
-              _backLoading.value = !_backLoading.value;
-            },
+            child: Text(
+              'BACK',
+              style: TextStyle(
+                color: Colors.grey[500]!,
+              ),
+            ),
+            onPressed: () => details.onStepCancel?.call(),
           ),
         ),
-        const SizedBox(
-          width: 12,
+        SizedBox(
+          width: SizeConfig.safeBlockHorizontal * 2,
         ),
         Expanded(
           child: RaisedGradientButton(
-            height: MediaQuery.of(context).size.height * 0.050,
+            height: SizeConfig.safeBlockVertical * 5,
             gradient: const LinearGradient(
               colors: [
                 Colors.purple,
@@ -150,9 +139,9 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
               end: Alignment.topLeft,
             ),
             child: AnimatedBuilder(
-                animation: Listenable.merge([_nextLoading, _currentStep]),
+                animation: Listenable.merge([_createLoading, _currentStep]),
                 builder: (context, _) {
-                  return _nextLoading.value
+                  return _createLoading.value
                       ? LoadingHelper.showButtonLoading()
                       : Text(
                           _currentStep.value == getSteps(isDarkTheme).length - 1
@@ -164,8 +153,6 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                         );
                 }),
             onPressed: () {
-              _nextLoading.value = !_nextLoading.value;
-
               if (_currentStep.value == getSteps(isDarkTheme).length - 1) {
                 createUser(context);
               } else {
@@ -173,8 +160,6 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                   details.onStepContinue?.call();
                 }
               }
-
-              _nextLoading.value = !_nextLoading.value;
             },
           ),
         ),
@@ -200,10 +185,10 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
       child: Form(
         key: _accountFormKey,
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+          padding: EdgeInsets.only(bottom: SizeConfig.safeBlockVertical * 2),
           child: Wrap(
-            spacing: 20,
-            runSpacing: 10,
+            spacing: 20.0,
+            runSpacing: 15.0,
             children: <Widget>[
               Observer(
                 builder: (_) => TextFormField(
@@ -281,10 +266,10 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
       child: Form(
         key: _detailsFormKey,
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+          padding: EdgeInsets.only(bottom: SizeConfig.safeBlockVertical * 2),
           child: Wrap(
-            spacing: 20,
-            runSpacing: 10,
+            spacing: 20.0,
+            runSpacing: 15.0,
             children: <Widget>[
               Row(
                 children: [
@@ -295,8 +280,8 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                       }),
                   Expanded(
                     child: Wrap(
-                      spacing: 20,
-                      runSpacing: 10,
+                      spacing: 20.0,
+                      runSpacing: 15.0,
                       children: [
                         Observer(
                           builder: (_) => TextFormField(
@@ -368,7 +353,7 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
     showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.30,
+        height: SizeConfig.safeBlockVertical * 32,
         color: Colors.white,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -393,7 +378,7 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
               ],
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.20,
+              height: SizeConfig.safeBlockVertical * 22,
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.date,
                 initialDateTime: _user.dateOfBirth ?? DateTime.now(),
@@ -407,10 +392,10 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
   }
 
   void createUser(BuildContext context) {
-    _nextLoading.value = !_nextLoading.value;
-
     if (_accountFormKey.currentState!.validate() &&
         _detailsFormKey.currentState!.validate()) {
+      _createLoading.value = !_createLoading.value;
+
       _userDao.userExists(_user.id, _user.email!).then((exists) {
         if (!exists) {
           if (_imageFile.value != null) {
@@ -426,19 +411,21 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
           _user.type = UserType.user;
           _user.password = EncrypterHelper.encrypt(_user.password!);
 
-          _userDao
-              .save(_user.toUser())
-              .then((userId) => MessageHelper.showSuccessMessage(
-                    context,
-                    "User created!",
-                  ));
+          _userDao.save(_user.toUser()).then((userId) {
+            MessageHelper.showSuccessMessage(
+              context,
+              "User created!",
+            );
 
-          NavigatorHelper().navigateToRoute(
-            context,
-            "/",
-            removeUntil: true,
-          );
+            NavigatorHelper().navigateToRoute(
+              context,
+              "/",
+              removeUntil: true,
+            );
+          });
         } else {
+          _createLoading.value = !_createLoading.value;
+
           MessageHelper.showErrorMessage(
             context,
             "User email ${_user.email!} already exists!",
@@ -446,8 +433,6 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
         }
       });
     }
-
-    _nextLoading.value = !_nextLoading.value;
   }
 
   void updateName(name) {
@@ -527,14 +512,16 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
   Widget getProfileImage(isDarkTheme) {
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: Center(
+        Center(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: SizeConfig.safeBlockVertical * 2,
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(3.0), //or 15.0
               child: Container(
-                height: 130.0,
-                width: 130.0,
+                height: SizeConfig.safeBlockVertical * 20,
+                width: SizeConfig.safeBlockHorizontal * 30,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -546,8 +533,8 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                   ),
                 ),
                 child: SizedBox(
-                  height: 100.0,
-                  width: 100.0,
+                  height: SizeConfig.safeBlockVertical * 10,
+                  width: SizeConfig.safeBlockHorizontal * 10,
                   child: Observer(
                     builder: (_) => Image(
                       fit: BoxFit.cover,
@@ -565,13 +552,16 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 105, left: 55),
+          padding: EdgeInsets.only(
+            top: SizeConfig.safeBlockVertical * 16,
+            left: SizeConfig.safeBlockHorizontal * 13,
+          ),
           child: Center(
             child: CircleAvatar(
-              radius: 15,
+              radius: 15.0,
               backgroundColor: isDarkTheme ? Colors.grey[850] : Colors.grey[50],
               child: IconButton(
-                iconSize: 15,
+                iconSize: 15.0,
                 icon: Icon(
                   Icons.photo_camera,
                   color: isDarkTheme ? Colors.grey[50] : Colors.grey[850],
@@ -590,14 +580,16 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                               ),
                             ),
                           ),
-                          contentPadding: const EdgeInsets.all(8.0),
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: SizeConfig.safeBlockVertical * 2,
+                            horizontal: SizeConfig.safeBlockHorizontal * 2,
+                          ),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: <Widget>[
                               RaisedGradientButton(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.050,
+                                height: SizeConfig.safeBlockVertical * 5,
                                 gradient: const LinearGradient(
                                   colors: [
                                     Colors.purple,
@@ -626,12 +618,14 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                                     if (value != null) {
                                       _imageFile.value = value;
                                     }
+                                  }).whenComplete(() {
+                                    _camLoading.value = !_camLoading.value;
+                                    NavigatorHelper().popRoute(dialogContext);
                                   });
-
-                                  _camLoading.value = !_camLoading.value;
-
-                                  NavigatorHelper().popRoute(dialogContext);
                                 },
+                              ),
+                              SizedBox(
+                                height: SizeConfig.safeBlockVertical * 2,
                               ),
                               OutlinedButton(
                                 style: OutlinedButton.styleFrom(
@@ -652,12 +646,7 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
                                             );
                                     }),
                                 onPressed: () {
-                                  _camLoading.value = !_camLoading.value;
-
                                   _imageFile.value = null;
-
-                                  _camLoading.value = !_camLoading.value;
-
                                   NavigatorHelper().popRoute(dialogContext);
                                 },
                               ),

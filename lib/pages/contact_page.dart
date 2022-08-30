@@ -7,6 +7,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 
 import '../helpers/navigator_helper.dart';
+import '../helpers/size_config.dart';
 import '../widgets/app_bar.dart';
 import '../helpers/contact_type_helper.dart';
 import '../helpers/loading_helper.dart';
@@ -36,7 +37,6 @@ class _ContactPagePageState extends State<ContactPage> {
   late ContactModel _contact;
   late ContactDao _contactDao;
   late GlobalKey<FormState> _formKey;
-
   late ValueNotifier<bool> _saveLoading;
   late ValueNotifier<bool> _deleteLoading;
 
@@ -46,13 +46,14 @@ class _ContactPagePageState extends State<ContactPage> {
     _contact = widget.contact;
     _contactDao = ContactDao();
     _formKey = GlobalKey<FormState>();
-
     _saveLoading = ValueNotifier<bool>(false);
     _deleteLoading = ValueNotifier<bool>(false);
   }
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
+
     return FutureBuilder<User?>(
         future: loadUserSignedIn(),
         builder: (context, AsyncSnapshot<User?> userSnapshot) {
@@ -66,13 +67,16 @@ class _ContactPagePageState extends State<ContactPage> {
               ),
             ),
             body: SingleChildScrollView(
-              child: Form(
-                key: _formKey,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: SizeConfig.safeBlockVertical * 3,
+                  horizontal: SizeConfig.safeBlockVertical * 3,
+                ),
+                child: Form(
+                  key: _formKey,
                   child: Wrap(
-                    spacing: 20,
-                    runSpacing: 10,
+                    spacing: 20.0,
+                    runSpacing: 15.0,
                     children: <Widget>[
                       Observer(
                         builder: (_) => TextFormField(
@@ -136,7 +140,7 @@ class _ContactPagePageState extends State<ContactPage> {
                         ),
                       ),
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * .02,
+                        height: SizeConfig.safeBlockVertical * 2,
                       ),
                       getDeleteContactButton(context, userSnapshot.data)
                     ],
@@ -179,22 +183,26 @@ class _ContactPagePageState extends State<ContactPage> {
   }
 
   void saveContact(userSignedIn, BuildContext context) {
-    _saveLoading.value = !_saveLoading.value;
-
     if (_formKey.currentState!.validate()) {
+      _saveLoading.value = !_saveLoading.value;
+
       _contactDao
           .contactExists(userSignedIn.id, _contact.id, _contact.phone!)
           .then((exists) {
         if (!exists) {
           _contact.userId = userSignedIn.id;
 
-          _contactDao.save(_contact.toContact()).then((_) => MessageHelper.showSuccessMessage(
-                context,
-                _contact.id != null ? "Contact updated!" : "Contact added!",
-              ));
+          _contactDao.save(_contact.toContact()).then((_) {
+            MessageHelper.showSuccessMessage(
+              context,
+              _contact.id != null ? "Contact updated!" : "Contact added!",
+            );
 
-          returnToListingContacts(context);
+            returnToListingContacts(context);
+          });
         } else {
+          _saveLoading.value = !_saveLoading.value;
+
           MessageHelper.showErrorMessage(
             context,
             "Contact phone ${_contact.phone!} already exists!",
@@ -202,15 +210,13 @@ class _ContactPagePageState extends State<ContactPage> {
         }
       });
     }
-
-    _saveLoading.value = !_saveLoading.value;
   }
 
   Widget getDeleteContactButton(BuildContext context, userSignedIn) {
     return _contact.id != null
         ? SizedBox(
-            height: MediaQuery.of(context).size.height * .05,
-            width: MediaQuery.of(context).size.width,
+            height: SizeConfig.safeBlockVertical * 5,
+            width: SizeConfig.screenWidth,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(
@@ -240,22 +246,22 @@ class _ContactPagePageState extends State<ContactPage> {
                     );
 
                     returnToListingContacts(context);
+                  } else {
+                    _deleteLoading.value = !_deleteLoading.value;
+
+                    MessageHelper.showErrorMessage(
+                      context,
+                      "Something went wrong, try later!",
+                    );
                   }
-
-                  MessageHelper.showErrorMessage(
-                    context,
-                    "Something went wrong, try later!",
-                  );
                 });
-
-                _deleteLoading.value = !_deleteLoading.value;
               },
             ),
           )
         : Container();
   }
 
-  returnToListingContacts(BuildContext context) {
+  void returnToListingContacts(BuildContext context) {
     NavigatorHelper().navigateToWidget(
       context,
       const ListContactPage(),

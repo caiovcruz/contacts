@@ -59,7 +59,7 @@ class ContactDrawer extends StatelessWidget {
                           userSnapshot.data?.profileImagePath),
                       builder: (context, AsyncSnapshot<File?> fileSnapshot) {
                         return CircleAvatar(
-                          radius: 50,
+                          radius: 50.0,
                           foregroundImage: loadProfileImage(
                               userSnapshot.data?.gender, fileSnapshot.data),
                         );
