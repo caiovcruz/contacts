@@ -59,6 +59,7 @@ class _AccountPagePageState extends State<AccountPage>
   late ValueNotifier<File?> _imageFile;
   late ValueNotifier<File?> _backgroundImageFile;
   late TextEditingController _dateOfBirthTextController;
+  late TextEditingController _phoneTextController;
   late TabController _tabController;
 
   @override
@@ -81,6 +82,12 @@ class _AccountPagePageState extends State<AccountPage>
     _dateOfBirthTextController = TextEditingController(
         text:
             "${_userDetails.dateOfBirth?.month ?? '00'}/${_userDetails.dateOfBirth?.day ?? '00'}/${_userDetails.dateOfBirth?.year ?? '0000'}");
+
+    print(_userDetails.phone);
+    _phoneTextController = _userDetails.phone != null
+        ? TextEditingController(
+            text: UtilBrasilFields.obterTelefone(_userDetails.phone!))
+        : TextEditingController();
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -314,7 +321,7 @@ class _AccountPagePageState extends State<AccountPage>
                   keyboardType: TextInputType.number,
                   validator: requiredTextValidator(),
                   onChanged: updatePhone,
-                  initialValue: _userDetails.phone,
+                  controller: _phoneTextController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: "Phone *",
@@ -435,6 +442,8 @@ class _AccountPagePageState extends State<AccountPage>
 
   void updateDetails(BuildContext context) {
     if (_detailsFormKey.currentState!.validate()) {
+      _updateLoading.value = !_updateLoading.value;
+
       if (_imageFile.value != null) {
         _userDetails.profileImagePath =
             "${const Uuid().v1()}${path.extension(_imageFile.value!.path)}";
@@ -464,10 +473,15 @@ class _AccountPagePageState extends State<AccountPage>
   void updateSecureStorage(userToWrite, userToRead) {
     _secureStorageHelper
         .write("USER", jsonEncode(userToWrite.toJson()))
-        .then((_) => MessageHelper.showSuccessMessage(
-              context,
-              "User updated!",
-            ));
+        .then((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _updateLoading.value = !_updateLoading.value;
+        MessageHelper.showSuccessMessage(
+          context,
+          "User updated!",
+        );
+      });
+    });
 
     _secureStorageHelper.read("USER").then((userJson) => userToRead =
         BaseUserModel.fromUser(User.fromJson(jsonDecode(userJson!))));
@@ -493,9 +507,8 @@ class _AccountPagePageState extends State<AccountPage>
     _userDetails.setGender(gender);
   }
 
-  void updatePhone(phone) {
-    _userDetails.phone = phone;
-  }
+  void updatePhone(phone) =>
+      _userDetails.phone = UtilBrasilFields.removeCaracteres(phone);
 
   TextFieldValidator requiredTextValidator() {
     return RequiredValidator(errorText: "required field");

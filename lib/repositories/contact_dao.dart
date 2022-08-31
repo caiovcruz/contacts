@@ -5,7 +5,7 @@ import '../models/contact.dart';
 import 'database.dart';
 
 class ContactDao {
-  static const String tableSql = 'CREATE TABLE $_tableName('
+  static const String tableSql = 'CREATE TABLE IF NOT EXISTS $_tableName('
       '$_id INTEGER PRIMARY KEY, '
       '$_userId INTEGER NOT NULL, '
       '$_name TEXT NOT NULL, '

@@ -449,9 +449,8 @@ class _CreateAccountStepsPageState extends State<CreateAccountStepsPage> {
     _user.setGender(gender);
   }
 
-  void updatePhone(phone) {
-    _user.phone = phone;
-  }
+  void updatePhone(phone) =>
+      _user.phone = UtilBrasilFields.removeCaracteres(phone);
 
   TextFieldValidator requiredTextValidator() {
     return RequiredValidator(errorText: "required field");

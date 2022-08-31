@@ -8,7 +8,7 @@ import '../models/user_type.dart';
 import 'database.dart';
 
 class UserDao {
-  static const String tableSql = 'CREATE TABLE $_tableName('
+  static const String tableSql = 'CREATE TABLE IF NOT EXISTS $_tableName('
       '$_id INTEGER PRIMARY KEY, '
       '$_name TEXT NOT NULL, '
       '$_email TEXT NOT NULL, '

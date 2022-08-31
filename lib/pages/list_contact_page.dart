@@ -1,8 +1,11 @@
 import 'dart:convert';
 
+import 'package:brasil_fields/brasil_fields.dart';
+import 'package:contacts/helpers/message_helper.dart';
 import 'package:contacts/helpers/secure_storage_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../helpers/navigator_helper.dart';
 import '../helpers/size_config.dart';
@@ -27,6 +30,7 @@ class _ListContactPageState extends State<ListContactPage> {
   late ContactDao _contactDao;
   late TextEditingController _searchController;
   late ValueNotifier<bool> _addLoading;
+  late ValueNotifier<bool> _callLoading;
   late ValueNotifier<List<Contact>> _contacts;
   late ValueNotifier<bool> _contactsLoaded;
   late ValueNotifier<List<Contact>> _listedContacts;
@@ -37,6 +41,7 @@ class _ListContactPageState extends State<ListContactPage> {
     _contactDao = ContactDao();
     _searchController = TextEditingController();
     _addLoading = ValueNotifier<bool>(false);
+    _callLoading = ValueNotifier<bool>(false);
     _contacts = ValueNotifier<List<Contact>>([]);
     _contactsLoaded = ValueNotifier<bool>(false);
     _listedContacts = ValueNotifier<List<Contact>>([]);
@@ -123,14 +128,72 @@ class _ListContactPageState extends State<ListContactPage> {
                                                       contact.type!),
                                             ),
                                             title: Text(contact.name!),
-                                            subtitle: Text(contact.phone!),
-                                            trailing: IconButton(
-                                              icon: Icon(
-                                                Icons.call,
-                                                color: Colors.grey[50],
-                                              ),
-                                              onPressed: () => {},
-                                            ),
+                                            subtitle: Text(contact.phone != null
+                                                ? UtilBrasilFields
+                                                    .obterTelefone(
+                                                        contact.phone!)
+                                                : contact.phone!),
+                                            trailing: AnimatedBuilder(
+                                                animation: _callLoading,
+                                                builder: (context, _) {
+                                                  return IconButton(
+                                                    icon: _callLoading.value
+                                                        ? LoadingHelper
+                                                            .showLoading()
+                                                        : Icon(
+                                                            Icons.call,
+                                                            color:
+                                                                Colors.grey[50],
+                                                          ),
+                                                    onPressed: () {
+                                                      if (!_callLoading.value) {
+                                                        if (contact.phone !=
+                                                            null) {
+                                                          _callLoading.value =
+                                                              !_callLoading
+                                                                  .value;
+
+                                                          Uri dialUrl = Uri(
+                                                              scheme: "tel",
+                                                              path:
+                                                                  "55${contact.phone!}");
+
+                                                          canLaunchUrl(dialUrl)
+                                                              .then(
+                                                                  (canLaunch) {
+                                                            if (canLaunch) {
+                                                              Future.delayed(
+                                                                  const Duration(
+                                                                      milliseconds:
+                                                                          500),
+                                                                  () => launchUrl(
+                                                                          dialUrl)
+                                                                      .whenComplete(() => _callLoading
+                                                                              .value =
+                                                                          !_callLoading
+                                                                              .value));
+                                                            } else {
+                                                              _callLoading
+                                                                      .value =
+                                                                  !_callLoading
+                                                                      .value;
+
+                                                              MessageHelper
+                                                                  .showErrorMessage(
+                                                                      context,
+                                                                      "Could not launch dial, try again in few minutes!");
+                                                            }
+                                                          });
+                                                        } else {
+                                                          MessageHelper
+                                                              .showErrorMessage(
+                                                                  context,
+                                                                  "Something went wrong, try again in few minutes!");
+                                                        }
+                                                      }
+                                                    },
+                                                  );
+                                                }),
                                           ),
                                         );
                                       },
@@ -162,7 +225,7 @@ class _ListContactPageState extends State<ListContactPage> {
                             );
                           },
                         )
-                      : LoadingHelper.showLoading(),
+                      : LoadingHelper.showCenteredLoading(),
                 ),
               ],
             );
@@ -182,7 +245,12 @@ class _ListContactPageState extends State<ListContactPage> {
   }
 
   void addNewContact(BuildContext context) {
+    _addLoading.value = !_addLoading.value;
+
     NavigatorHelper().showPageModal(context, ContactPage());
+
+    Future.delayed(const Duration(milliseconds: 500),
+        () => _addLoading.value = !_addLoading.value);
   }
 
   void editContact(BuildContext context, contact) {
@@ -195,12 +263,16 @@ class _ListContactPageState extends State<ListContactPage> {
 
   List<Widget>? getActionsAppBar() {
     return [
-      IconButton(
-        onPressed: () => addNewContact(context),
-        icon: _addLoading.value
-            ? LoadingHelper.showButtonLoading()
-            : const Icon(Icons.add),
-      ),
+      AnimatedBuilder(
+          animation: _addLoading,
+          builder: (context, _) {
+            return IconButton(
+              onPressed: () => addNewContact(context),
+              icon: _addLoading.value
+                  ? LoadingHelper.showButtonLoading()
+                  : const Icon(Icons.add),
+            );
+          }),
     ];
   }
 

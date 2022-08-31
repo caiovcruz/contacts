@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 
 class LoadingHelper {
   static Widget showButtonLoading({Color? widgetColor}) {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: showLoading(widgetColor: widgetColor ?? Colors.grey[50]),
+    return showCenteredLoading(widgetColor: widgetColor);
+  }
+
+  static Widget showCenteredLoading({Color? widgetColor}) {
+    return Center(
+      child: showLoading(widgetColor: widgetColor),
     );
   }
 
   static Widget showLoading({Color? widgetColor}) {
-    return Center(
+    return SizedBox(
+      width: 20.5,
+      height: 20.5,
       child: CircularProgressIndicator(
-        color: widgetColor,
+        color: widgetColor ?? Colors.grey[50],
       ),
     );
   }

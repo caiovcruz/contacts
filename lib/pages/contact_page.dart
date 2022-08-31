@@ -39,6 +39,8 @@ class _ContactPagePageState extends State<ContactPage> {
   late GlobalKey<FormState> _formKey;
   late ValueNotifier<bool> _saveLoading;
   late ValueNotifier<bool> _deleteLoading;
+  late TextEditingController _phoneTextController;
+  late TextEditingController _cpfTextController;
 
   @override
   void initState() {
@@ -48,6 +50,13 @@ class _ContactPagePageState extends State<ContactPage> {
     _formKey = GlobalKey<FormState>();
     _saveLoading = ValueNotifier<bool>(false);
     _deleteLoading = ValueNotifier<bool>(false);
+    _phoneTextController = _contact.phone != null
+        ? TextEditingController(
+            text: UtilBrasilFields.obterTelefone(_contact.phone!))
+        : TextEditingController();
+    _cpfTextController = _contact.cpf != null
+        ? TextEditingController(text: UtilBrasilFields.obterCpf(_contact.cpf!))
+        : TextEditingController();
   }
 
   @override
@@ -118,7 +127,7 @@ class _ContactPagePageState extends State<ContactPage> {
                       keyboardType: TextInputType.number,
                       validator: requiredTextValidator(),
                       onChanged: updatePhone,
-                      initialValue: _contact.phone,
+                      controller: _phoneTextController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: "Phone *",
@@ -142,7 +151,7 @@ class _ContactPagePageState extends State<ContactPage> {
                       ],
                       keyboardType: TextInputType.number,
                       onChanged: updateCpf,
-                      initialValue: _contact.cpf,
+                      controller: _cpfTextController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: "CPF",
@@ -288,13 +297,14 @@ class _ContactPagePageState extends State<ContactPage> {
     _contact.setName(name);
   }
 
-  void updatePhone(phone) => _contact.phone = phone;
+  void updatePhone(phone) =>
+      _contact.phone = UtilBrasilFields.removeCaracteres(phone);
 
   void updateEmail(email) {
     _contact.setEmail(email);
   }
 
-  void updateCpf(cpf) => _contact.cpf = cpf;
+  void updateCpf(cpf) => _contact.cpf = UtilBrasilFields.removeCaracteres(cpf);
 
   void updateType(type) {
     _contact.setType(type);

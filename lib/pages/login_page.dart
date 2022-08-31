@@ -177,7 +177,11 @@ class _LoginPageState extends State<LoginPage> {
                             return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: _signInloading.value
-                                  ? LoadingHelper.showButtonLoading()
+                                  ? SizedBox(
+                                      width: 30.0,
+                                      height: 30.0,
+                                      child: LoadingHelper.showButtonLoading(),
+                                    )
                                   : Text(
                                       'Sign In',
                                       style: TextStyle(
