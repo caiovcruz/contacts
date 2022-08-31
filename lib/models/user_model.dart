@@ -36,6 +36,9 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
   @observable
   String? profileImagePath;
 
+  @observable
+  String? backgroundProfileImagePath;
+
   @action
   setName(String name) {
     this.name = name;
@@ -76,6 +79,11 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
     this.profileImagePath = profileImagePath;
   }
 
+  @action
+  setBackgroundProfileImagePath(String backgroundProfileImagePath) {
+    this.backgroundProfileImagePath = backgroundProfileImagePath;
+  }
+
   BaseUserModel(
       {this.id,
       this.name,
@@ -85,7 +93,8 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
       this.gender,
       this.phone,
       this.type,
-      this.profileImagePath});
+      this.profileImagePath,
+      this.backgroundProfileImagePath});
 
   BaseUserModel.fromJson(Map<String, dynamic> json) {
     print(json);
@@ -98,6 +107,7 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
     phone = json['phone'];
     type = UserType.values[json['type']];
     profileImagePath = json['profileImagePath'];
+    backgroundProfileImagePath = json['backgroundProfileImagePath'];
   }
 
   Map<String, dynamic> toJson() {
@@ -111,6 +121,7 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
     data['phone'] = phone;
     data['type'] = type?.index;
     data['profileImagePath'] = profileImagePath;
+    data['backgroundProfileImagePath'] = backgroundProfileImagePath;
     return data;
   }
 
@@ -125,6 +136,7 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
       phone: phone,
       type: type,
       profileImagePath: profileImagePath,
+      backgroundProfileImagePath: backgroundProfileImagePath,
     );
   }
 
@@ -139,6 +151,7 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
       phone: user.phone,
       type: user.type,
       profileImagePath: user.profileImagePath,
+      backgroundProfileImagePath: user.backgroundProfileImagePath,
     );
   }
 
@@ -154,6 +167,7 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
       phone: phone,
       type: type,
       profileImagePath: profileImagePath,
+      backgroundProfileImagePath: backgroundProfileImagePath,
     );
   }
 
@@ -167,7 +181,8 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
       UserGender? gender,
       String? phone,
       UserType? type,
-      String? profileImagePath}) {
+      String? profileImagePath,
+      String? backgroundProfileImagePath}) {
     return UserModel(
       id: id,
       name: name,
@@ -178,6 +193,7 @@ abstract class BaseUserModel with Store implements Copyable<BaseUserModel> {
       phone: phone,
       type: type,
       profileImagePath: profileImagePath,
+      backgroundProfileImagePath: backgroundProfileImagePath,
     );
   }
 }

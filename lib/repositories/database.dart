@@ -10,14 +10,16 @@ Future<Database> getDatabase() async {
 
   return openDatabase(
     path,
-    onCreate: (db, version) {
-      tablesToCreate().forEach((table) {
-        try {
-          db.execute(table);
-        } catch (e) {
-          print(e);
-        }
-      });
+    onConfigure: (db) {
+      tablesToCreate().forEach(
+        (table) {
+          try {
+            db.execute(table);
+          } catch (e) {
+            print(e);
+          }
+        },
+      );
     },
     version: 3,
   );

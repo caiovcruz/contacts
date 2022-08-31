@@ -27,6 +27,9 @@ class ImagePickerHelper {
 
   static String getProfileImageFilesPath() => '/assets/images/profile/';
 
+  static String getBackgroundProfileImageFilesPath() =>
+      '/assets/images/profile/background/';
+
   static Future<File?> saveFileToExStorage(
       String fileName, File fileToSave, String pathToSave) async {
     Directory? appExStorageDirectory = await getExternalStorageDirectory();

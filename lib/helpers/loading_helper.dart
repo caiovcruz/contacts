@@ -5,7 +5,7 @@ class LoadingHelper {
     return SizedBox(
       width: 20,
       height: 20,
-      child: showLoading(widgetColor: widgetColor ?? Colors.white),
+      child: showLoading(widgetColor: widgetColor ?? Colors.grey[50]),
     );
   }
 

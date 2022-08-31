@@ -30,7 +30,7 @@ class UserGenderHelper {
         height: 40,
         width: 40,
         child: CircleAvatar(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.grey[50],
           child: UserGenderHelper.getIconByUserGender(gender),
         ),
       ),

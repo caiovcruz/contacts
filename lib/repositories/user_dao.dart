@@ -10,14 +10,15 @@ import 'database.dart';
 class UserDao {
   static const String tableSql = 'CREATE TABLE $_tableName('
       '$_id INTEGER PRIMARY KEY, '
-      '$_name TEXT, '
-      '$_email TEXT, '
-      '$_password TEXT, '
-      '$_dateOfBirth TEXT, '
-      '$_gender INT, '
-      '$_phone TEXT, '
-      '$_type INT, '
-      '$_profileImagePath TEXT )';
+      '$_name TEXT NOT NULL, '
+      '$_email TEXT NOT NULL, '
+      '$_password TEXT NOT NULL, '
+      '$_dateOfBirth TEXT NOT NULL, '
+      '$_gender INT NOT NULL, '
+      '$_phone TEXT NOT NULL, '
+      '$_type INT NOT NULL, '
+      '$_profileImagePath TEXT, '
+      '$_backgroundProfileImagePath TEXT )';
 
   static const String _tableName = 'users';
   static const String _id = 'id';
@@ -29,6 +30,7 @@ class UserDao {
   static const String _phone = 'phone';
   static const String _type = 'type';
   static const String _profileImagePath = 'profileImagePath';
+  static const String _backgroundProfileImagePath = 'backgroundProfileImagePath';
 
   Map<String, dynamic> _toMap(User user) {
     final Map<String, dynamic> userMap = {};
@@ -41,6 +43,7 @@ class UserDao {
     userMap[_phone] = user.phone;
     userMap[_type] = user.type?.index;
     userMap[_profileImagePath] = user.profileImagePath;
+    userMap[_backgroundProfileImagePath] = user.backgroundProfileImagePath;
 
     return userMap;
   }
@@ -56,6 +59,7 @@ class UserDao {
       phone: userMap[_phone],
       type: UserType.values[userMap[_type]],
       profileImagePath: userMap[_profileImagePath],
+      backgroundProfileImagePath: userMap[_backgroundProfileImagePath],
     );
   }
 

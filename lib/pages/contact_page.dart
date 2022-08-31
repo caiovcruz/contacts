@@ -55,101 +55,111 @@ class _ContactPagePageState extends State<ContactPage> {
     SizeConfig().init(context);
 
     return FutureBuilder<User?>(
-        future: loadUserSignedIn(),
-        builder: (context, AsyncSnapshot<User?> userSnapshot) {
-          return Scaffold(
-            appBar: getEditingAppBar(
-              context,
-              _contact.id != null ? "Edit Contact" : "New Contact",
-              actions: getActionsAppBar(
-                context,
-                userSnapshot,
-              ),
-            ),
-            body: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: SizeConfig.safeBlockVertical * 3,
-                  horizontal: SizeConfig.safeBlockVertical * 3,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Wrap(
-                    spacing: 20.0,
-                    runSpacing: 15.0,
-                    children: <Widget>[
-                      Observer(
-                        builder: (_) => TextFormField(
-                          validator: nameValidator(),
-                          onChanged: updateName,
-                          initialValue: _contact.name,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: "Name *",
-                          ),
-                        ),
-                      ),
-                      Observer(
-                        builder: (_) => DropdownButtonFormField(
-                          value: _contact.type,
-                          validator: typeValidator(),
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: "Contact Type *",
-                          ),
-                          items: bindTypes(),
-                          onChanged: updateType,
-                        ),
-                      ),
-                      TextFormField(
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          TelefoneInputFormatter()
-                        ],
-                        keyboardType: TextInputType.number,
-                        validator: requiredTextValidator(),
-                        onChanged: updatePhone,
-                        initialValue: _contact.phone,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "Phone *",
-                        ),
-                      ),
-                      Observer(
-                        builder: (_) => TextFormField(
-                          validator: emailValidator(),
-                          onChanged: updateEmail,
-                          initialValue: _contact.email,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: "E-mail *",
-                          ),
-                        ),
-                      ),
-                      TextFormField(
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          CpfInputFormatter()
-                        ],
-                        keyboardType: TextInputType.number,
-                        onChanged: updateCpf,
-                        initialValue: _contact.cpf,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "CPF",
-                        ),
-                      ),
-                      SizedBox(
-                        height: SizeConfig.safeBlockVertical * 2,
-                      ),
-                      getDeleteContactButton(context, userSnapshot.data)
-                    ],
+      future: loadUserSignedIn(),
+      builder: (context, AsyncSnapshot<User?> userSnapshot) {
+        return Scaffold(
+          appBar: _contact.id != null
+              ? getEditingAppBar(
+                  context,
+                  "Edit Contact",
+                  actions: getActionsAppBar(
+                    context,
+                    userSnapshot,
+                  ),
+                )
+              : getModalEditingAppBar(
+                  context,
+                  "New Contact",
+                  actions: getActionsAppBar(
+                    context,
+                    userSnapshot,
                   ),
                 ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: SizeConfig.safeBlockVertical * 3,
+                horizontal: SizeConfig.safeBlockVertical * 3,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Wrap(
+                  spacing: 20.0,
+                  runSpacing: 15.0,
+                  children: <Widget>[
+                    Observer(
+                      builder: (_) => TextFormField(
+                        validator: nameValidator(),
+                        onChanged: updateName,
+                        initialValue: _contact.name,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "Name *",
+                        ),
+                      ),
+                    ),
+                    Observer(
+                      builder: (_) => DropdownButtonFormField(
+                        value: _contact.type,
+                        validator: typeValidator(),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "Contact Type *",
+                        ),
+                        items: bindTypes(),
+                        onChanged: updateType,
+                      ),
+                    ),
+                    TextFormField(
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        TelefoneInputFormatter()
+                      ],
+                      keyboardType: TextInputType.number,
+                      validator: requiredTextValidator(),
+                      onChanged: updatePhone,
+                      initialValue: _contact.phone,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: "Phone *",
+                      ),
+                    ),
+                    Observer(
+                      builder: (_) => TextFormField(
+                        validator: emailValidator(),
+                        onChanged: updateEmail,
+                        initialValue: _contact.email,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: "E-mail *",
+                        ),
+                      ),
+                    ),
+                    TextFormField(
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        CpfInputFormatter()
+                      ],
+                      keyboardType: TextInputType.number,
+                      onChanged: updateCpf,
+                      initialValue: _contact.cpf,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: "CPF",
+                      ),
+                    ),
+                    SizedBox(
+                      height: SizeConfig.safeBlockVertical * 2,
+                    ),
+                    getDeleteContactButton(context, userSnapshot.data)
+                  ],
+                ),
               ),
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 
   List<Widget>? getActionsAppBar(
@@ -161,18 +171,19 @@ class _ContactPagePageState extends State<ContactPage> {
       BuildContext context, AsyncSnapshot<User?> userSnapshot) {
     return TextButton(
       child: AnimatedBuilder(
-          animation: _saveLoading,
-          builder: (context, _) {
-            return _saveLoading.value
-                ? LoadingHelper.showButtonLoading()
-                : const Text(
-                    "Done",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-          }),
+        animation: _saveLoading,
+        builder: (context, _) {
+          return _saveLoading.value
+              ? LoadingHelper.showButtonLoading()
+              : Text(
+                  "Done",
+                  style: TextStyle(
+                    color: Colors.grey[50],
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+        },
+      ),
       onPressed: () => saveContact(userSnapshot.data, context),
     );
   }
@@ -188,27 +199,31 @@ class _ContactPagePageState extends State<ContactPage> {
 
       _contactDao
           .contactExists(userSignedIn.id, _contact.id, _contact.phone!)
-          .then((exists) {
-        if (!exists) {
-          _contact.userId = userSignedIn.id;
+          .then(
+        (exists) {
+          if (!exists) {
+            _contact.userId = userSignedIn.id;
 
-          _contactDao.save(_contact.toContact()).then((_) {
-            MessageHelper.showSuccessMessage(
-              context,
-              _contact.id != null ? "Contact updated!" : "Contact added!",
+            _contactDao.save(_contact.toContact()).then(
+              (_) {
+                MessageHelper.showSuccessMessage(
+                  context,
+                  _contact.id != null ? "Contact updated!" : "Contact added!",
+                );
+
+                returnToListingContacts(context);
+              },
             );
+          } else {
+            _saveLoading.value = !_saveLoading.value;
 
-            returnToListingContacts(context);
-          });
-        } else {
-          _saveLoading.value = !_saveLoading.value;
-
-          MessageHelper.showErrorMessage(
-            context,
-            "Contact phone ${_contact.phone!} already exists!",
-          );
-        }
-      });
+            MessageHelper.showErrorMessage(
+              context,
+              "Contact phone ${_contact.phone!} already exists!",
+            );
+          }
+        },
+      );
     }
   }
 
@@ -225,36 +240,36 @@ class _ContactPagePageState extends State<ContactPage> {
                 ),
               ),
               child: AnimatedBuilder(
-                  animation: _deleteLoading,
-                  builder: (context, _) {
-                    return _deleteLoading.value
-                        ? LoadingHelper.showButtonLoading(
-                            widgetColor: Colors.red)
-                        : const Text("Delete Contact",
-                            style: TextStyle(color: Colors.red));
-                  }),
+                animation: _deleteLoading,
+                builder: (context, _) {
+                  return _deleteLoading.value
+                      ? LoadingHelper.showButtonLoading(widgetColor: Colors.red)
+                      : const Text("Delete Contact",
+                          style: TextStyle(color: Colors.red));
+                },
+              ),
               onPressed: () {
                 _deleteLoading.value = !_deleteLoading.value;
 
-                _contactDao
-                    .delete(userSignedIn.id!, _contact.id!)
-                    .then((deleted) {
-                  if (deleted) {
-                    MessageHelper.showSuccessMessage(
-                      context,
-                      "Contact deleted!",
-                    );
+                _contactDao.delete(userSignedIn.id!, _contact.id!).then(
+                  (deleted) {
+                    if (deleted) {
+                      MessageHelper.showSuccessMessage(
+                        context,
+                        "Contact deleted!",
+                      );
 
-                    returnToListingContacts(context);
-                  } else {
-                    _deleteLoading.value = !_deleteLoading.value;
+                      returnToListingContacts(context);
+                    } else {
+                      _deleteLoading.value = !_deleteLoading.value;
 
-                    MessageHelper.showErrorMessage(
-                      context,
-                      "Something went wrong, try later!",
-                    );
-                  }
-                });
+                      MessageHelper.showErrorMessage(
+                        context,
+                        "Something went wrong, try later!",
+                      );
+                    }
+                  },
+                );
               },
             ),
           )

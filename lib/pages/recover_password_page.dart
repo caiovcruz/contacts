@@ -85,45 +85,50 @@ class _RecoverPasswordPageState extends State<RecoverPasswordPage> {
   ElevatedButton getRecoverPasswordButton(BuildContext context) {
     return ElevatedButton(
       child: AnimatedBuilder(
-          animation: _recoverloading,
-          builder: (context, _) {
-            return _recoverloading.value
-                ? LoadingHelper.showButtonLoading()
-                : const Text(
-                    "Done",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-          }),
+        animation: _recoverloading,
+        builder: (context, _) {
+          return _recoverloading.value
+              ? LoadingHelper.showButtonLoading()
+              : Text(
+                  "Done",
+                  style: TextStyle(
+                    color: Colors.grey[50],
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+        },
+      ),
       onPressed: () {
         if (_formKey.currentState!.validate()) {
           _recoverloading.value = !_recoverloading.value;
 
-          _userDao.getByEmail(_email.value).then((user) {
-            if (user != null) {
-              Email.sendEmail(
-                user.name!,
-                user.email!,
-                Email.recoverPasswordSuject,
-                Email.recoverPasswordMessage(user.password!),
-              ).whenComplete(() {
-                MessageHelper.showSuccessMessage(
-                    context, "Email sent successfully!");
+          _userDao.getByEmail(_email.value).then(
+            (user) {
+              if (user != null) {
+                Email.sendEmail(
+                  user.name!,
+                  user.email!,
+                  Email.recoverPasswordSuject,
+                  Email.recoverPasswordMessage(user.password!),
+                ).whenComplete(
+                  () {
+                    MessageHelper.showSuccessMessage(
+                        context, "Email sent successfully!");
 
-                NavigatorHelper()
-                    .navigateToRoute(context, "/", removeUntil: true);
-              });
-            } else {
-              _recoverloading.value = !_recoverloading.value;
+                    NavigatorHelper()
+                        .navigateToRoute(context, "/", removeUntil: true);
+                  },
+                );
+              } else {
+                _recoverloading.value = !_recoverloading.value;
 
-              MessageHelper.showErrorMessage(
-                context,
-                "User email ${_email.value} does not exists!",
-              );
-            }
-          });
+                MessageHelper.showErrorMessage(
+                  context,
+                  "User email ${_email.value} does not exists!",
+                );
+              }
+            },
+          );
         }
       },
     );

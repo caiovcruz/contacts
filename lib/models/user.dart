@@ -11,6 +11,7 @@ class User {
   String? phone;
   UserType? type;
   String? profileImagePath;
+  String? backgroundProfileImagePath;
 
   User(
       {this.id,
@@ -21,7 +22,8 @@ class User {
       this.gender,
       this.phone,
       this.type,
-      this.profileImagePath});
+      this.profileImagePath,
+      this.backgroundProfileImagePath});
 
   User.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -33,6 +35,7 @@ class User {
     phone = json['phone'];
     type = UserType.values[json['type']];
     profileImagePath = json['profileImagePath'];
+    backgroundProfileImagePath = json['backgroundProfileImagePath'];
   }
 
   Map<String, dynamic> toJson() {
@@ -46,6 +49,7 @@ class User {
     data['phone'] = phone;
     data['type'] = type?.index;
     data['profileImagePath'] = profileImagePath;
+    data['backgroundProfileImagePath'] = backgroundProfileImagePath;
     return data;
   }
 

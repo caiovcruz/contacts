@@ -133,6 +133,23 @@ mixin _$UserModel on BaseUserModel, Store {
     });
   }
 
+  late final _$backgroundProfileImagePathAtom =
+      Atom(name: 'BaseUserModel.backgroundProfileImagePath', context: context);
+
+  @override
+  String? get backgroundProfileImagePath {
+    _$backgroundProfileImagePathAtom.reportRead();
+    return super.backgroundProfileImagePath;
+  }
+
+  @override
+  set backgroundProfileImagePath(String? value) {
+    _$backgroundProfileImagePathAtom
+        .reportWrite(value, super.backgroundProfileImagePath, () {
+      super.backgroundProfileImagePath = value;
+    });
+  }
+
   late final _$BaseUserModelActionController =
       ActionController(name: 'BaseUserModel', context: context);
 
@@ -225,6 +242,17 @@ mixin _$UserModel on BaseUserModel, Store {
   }
 
   @override
+  dynamic setBackgroundProfileImagePath(String backgroundProfileImagePath) {
+    final _$actionInfo = _$BaseUserModelActionController.startAction(
+        name: 'BaseUserModel.setBackgroundProfileImagePath');
+    try {
+      return super.setBackgroundProfileImagePath(backgroundProfileImagePath);
+    } finally {
+      _$BaseUserModelActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
 name: ${name},
@@ -234,7 +262,8 @@ dateOfBirth: ${dateOfBirth},
 gender: ${gender},
 phone: ${phone},
 type: ${type},
-profileImagePath: ${profileImagePath}
+profileImagePath: ${profileImagePath},
+backgroundProfileImagePath: ${backgroundProfileImagePath}
     ''';
   }
 }

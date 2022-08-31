@@ -27,7 +27,7 @@ import '../helpers/message_helper.dart';
 import '../models/user_model.dart';
 import '../models/user_type.dart';
 import '../repositories/user_dao.dart';
-import '../widgets/raised_gradient_button.dart';
+import '../widgets/gradient_elevated_button.dart';
 
 class AccountPage extends StatefulWidget {
   final UserModel user;
@@ -57,6 +57,7 @@ class _AccountPagePageState extends State<AccountPage>
   late ValueNotifier<bool> _updateLoading;
   late ValueNotifier<bool> _camLoading;
   late ValueNotifier<File?> _imageFile;
+  late ValueNotifier<File?> _backgroundImageFile;
   late TextEditingController _dateOfBirthTextController;
   late TabController _tabController;
 
@@ -76,6 +77,7 @@ class _AccountPagePageState extends State<AccountPage>
     _updateLoading = ValueNotifier<bool>(false);
     _camLoading = ValueNotifier<bool>(false);
     _imageFile = ValueNotifier<File?>(null);
+    _backgroundImageFile = ValueNotifier<File?>(null);
     _dateOfBirthTextController = TextEditingController(
         text:
             "${_userDetails.dateOfBirth?.month ?? '00'}/${_userDetails.dateOfBirth?.day ?? '00'}/${_userDetails.dateOfBirth?.year ?? '0000'}");
@@ -127,14 +129,14 @@ class _AccountPagePageState extends State<AccountPage>
         ),
         child: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,
+          labelColor: Colors.grey[50],
           unselectedLabelColor: Colors.white70,
           indicatorSize: TabBarIndicatorSize.label,
           indicatorPadding: EdgeInsets.symmetric(
             vertical: SizeConfig.safeBlockVertical * 1,
             horizontal: SizeConfig.safeBlockVertical * 1,
           ),
-          indicatorColor: Colors.white,
+          indicatorColor: Colors.grey[50],
           tabs: const [
             Tab(
               text: "Details",
@@ -265,52 +267,31 @@ class _AccountPagePageState extends State<AccountPage>
             spacing: 20.0,
             runSpacing: 15.0,
             children: <Widget>[
-              Row(
-                children: [
-                  FutureBuilder<void>(
-                      future:
-                          getProfileImageFile(_userDetails.profileImagePath),
-                      builder: (context, _) {
-                        return ValueListenableBuilder(
-                            valueListenable: _imageFile,
-                            builder: (context, imageFile, _) {
-                              return getProfileImage(isDarkTheme.value);
-                            });
-                      }),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 20.0,
-                      runSpacing: 15.0,
-                      children: [
-                        Observer(
-                          builder: (_) => TextFormField(
-                            validator: nameValidator(),
-                            onChanged: updateName,
-                            initialValue: _userDetails.name,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: "Name *",
-                            ),
-                          ),
-                        ),
-                        TextFormField(
-                          controller: _dateOfBirthTextController,
-                          readOnly: true,
-                          validator: requiredTextValidator(),
-                          decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
-                            labelText: "Date of birth *",
-                            suffixIcon: Icon(
-                              Icons.calendar_today,
-                              color: Theme.of(context).primaryColorDark,
-                            ),
-                          ),
-                          onTap: () => showDateTimePicker(),
-                        ),
-                      ],
-                    ),
+              getProfileImage(isDarkTheme.value),
+              Observer(
+                builder: (_) => TextFormField(
+                  validator: nameValidator(),
+                  onChanged: updateName,
+                  initialValue: _userDetails.name,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Name *",
                   ),
-                ],
+                ),
+              ),
+              TextFormField(
+                controller: _dateOfBirthTextController,
+                readOnly: true,
+                validator: requiredTextValidator(),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: "Date of birth *",
+                  suffixIcon: Icon(
+                    Icons.calendar_today,
+                    color: Theme.of(context).primaryColorDark,
+                  ),
+                ),
+                onTap: () => showDateTimePicker(),
               ),
               Observer(
                 builder: (_) => DropdownButtonFormField(
@@ -353,7 +334,7 @@ class _AccountPagePageState extends State<AccountPage>
       context: context,
       builder: (_) => Container(
         height: SizeConfig.safeBlockVertical * 32,
-        color: Colors.white,
+        color: Colors.grey[50],
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -399,18 +380,19 @@ class _AccountPagePageState extends State<AccountPage>
   Widget getDoneButton(BuildContext context) {
     return TextButton(
       child: AnimatedBuilder(
-          animation: _updateLoading,
-          builder: (context, _) {
-            return _updateLoading.value
-                ? LoadingHelper.showButtonLoading()
-                : const Text(
-                    "Done",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-          }),
+        animation: _updateLoading,
+        builder: (context, _) {
+          return _updateLoading.value
+              ? LoadingHelper.showButtonLoading()
+              : Text(
+                  "Done",
+                  style: TextStyle(
+                    color: Colors.grey[50],
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+        },
+      ),
       onPressed: () => manageUser(context),
     );
   }
@@ -427,23 +409,27 @@ class _AccountPagePageState extends State<AccountPage>
     if (_accountFormKey.currentState!.validate()) {
       _updateLoading.value = !_updateLoading.value;
 
-      _userDao.userExists(_userAccount.id, _userAccount.email!).then((exists) {
-        if (!exists) {
-          _userAccount.password =
-              EncrypterHelper.encrypt(_userAccount.password!);
+      _userDao.userExists(_userAccount.id, _userAccount.email!).then(
+        (exists) {
+          if (!exists) {
+            _userAccount.password =
+                EncrypterHelper.encrypt(_userAccount.password!);
 
-          _userDao.save(_userAccount.toUser()).then((userId) {
-            updateSecureStorage(_userAccount, _userDetails);
-          });
-        } else {
-          _updateLoading.value = !_updateLoading.value;
+            _userDao.save(_userAccount.toUser()).then(
+              (userId) {
+                updateSecureStorage(_userAccount, _userDetails);
+              },
+            );
+          } else {
+            _updateLoading.value = !_updateLoading.value;
 
-          MessageHelper.showErrorMessage(
-            context,
-            "User email ${_userAccount.email!} already exists!",
-          );
-        }
-      });
+            MessageHelper.showErrorMessage(
+              context,
+              "User email ${_userAccount.email!} already exists!",
+            );
+          }
+        },
+      );
     }
   }
 
@@ -457,9 +443,21 @@ class _AccountPagePageState extends State<AccountPage>
             _imageFile.value!, ImagePickerHelper.getProfileImageFilesPath());
       }
 
-      _userDao.save(_userDetails.toUser()).then((userId) {
-        updateSecureStorage(_userDetails, _userAccount);
-      });
+      if (_backgroundImageFile.value != null) {
+        _userDetails.backgroundProfileImagePath =
+            "${const Uuid().v1()}${path.extension(_backgroundImageFile.value!.path)}";
+
+        ImagePickerHelper.saveFileToExStorage(
+            _userDetails.backgroundProfileImagePath!,
+            _backgroundImageFile.value!,
+            ImagePickerHelper.getBackgroundProfileImageFilesPath());
+      }
+
+      _userDao.save(_userDetails.toUser()).then(
+        (userId) {
+          updateSecureStorage(_userDetails, _userAccount);
+        },
+      );
     }
   }
 
@@ -545,6 +543,144 @@ class _AccountPagePageState extends State<AccountPage>
         .toList();
   }
 
+  Widget getProfileImage(isDarkTheme) {
+    return Stack(
+      children: [
+        FutureBuilder<void>(
+            future: getBackgroundProfileImageFile(
+                _userDetails.backgroundProfileImagePath),
+            builder: (context, _) {
+              return ValueListenableBuilder(
+                valueListenable: _backgroundImageFile,
+                builder: (context, backgroungImageFile, _) {
+                  return UserAccountsDrawerHeader(
+                    decoration: BoxDecoration(
+                      image: _backgroundImageFile.value != null
+                          ? DecorationImage(
+                              image:
+                                  Image.file(_backgroundImageFile.value!).image,
+                            )
+                          : null,
+                      gradient: const LinearGradient(
+                        colors: [
+                          Colors.purple,
+                          Colors.deepPurple,
+                        ],
+                        begin: Alignment.bottomRight,
+                        end: Alignment.topLeft,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          offset: Offset(0.0, 1.5),
+                          blurRadius: 1.5,
+                        ),
+                      ],
+                    ),
+                    accountEmail: Observer(
+                      builder: (_) => _userAccount.email != null
+                          ? Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              child: Text(
+                                "${_userAccount.email}",
+                                style: TextStyle(
+                                  color: Colors.grey[850],
+                                ),
+                              ),
+                            )
+                          : Container(),
+                    ),
+                    accountName: Observer(
+                      builder: (_) => _userDetails.name != null
+                          ? Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              child: Text(
+                                "${_userDetails.name}",
+                                style: TextStyle(
+                                  color: Colors.grey[850],
+                                ),
+                              ),
+                            )
+                          : Container(),
+                    ),
+                    currentAccountPicture: FutureBuilder<void>(
+                        future:
+                            getProfileImageFile(_userDetails.profileImagePath),
+                        builder: (context, _) {
+                          return ValueListenableBuilder(
+                            valueListenable: _imageFile,
+                            builder: (context, imageFile, _) {
+                              return Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50.0,
+                                    foregroundImage: loadProfileImage(
+                                        _userDetails.gender, _imageFile.value),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: CircleAvatar(
+                                      radius: 15.0,
+                                      backgroundColor: Colors.grey[50],
+                                      child: IconButton(
+                                        iconSize: 15.0,
+                                        icon: Icon(
+                                          Icons.photo_camera,
+                                          color: Colors.grey[850],
+                                        ),
+                                        onPressed: () =>
+                                            manageFiles(context, _imageFile),
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              );
+                            },
+                          );
+                        }),
+                    otherAccountsPictures: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 15.0,
+                          backgroundColor: Colors.grey[50],
+                          child: IconButton(
+                            iconSize: 15.0,
+                            icon: Icon(
+                              Icons.photo_camera,
+                              color: Colors.grey[850],
+                            ),
+                            onPressed: () =>
+                                manageFiles(context, _backgroundImageFile),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }),
+      ],
+    );
+  }
+
+  ImageProvider<Object>? loadProfileImage(
+      UserGender? gender, File? userProfileImageFile) {
+    return userProfileImageFile != null
+        ? Image.file(userProfileImageFile).image
+        : AssetImage(
+            "assets/images/${gender != null ? '${UserGender.values[gender.index].name}-user' : 'male-user'}.png");
+  }
+
   Future<void> getProfileImageFile(String? userProfileImageFilePath) async {
     if (userProfileImageFilePath != null) {
       _imageFile.value = await ImagePickerHelper.getFileFromExStorage(
@@ -553,154 +689,96 @@ class _AccountPagePageState extends State<AccountPage>
     }
   }
 
-  Widget getProfileImage(isDarkTheme) {
-    return Stack(
-      children: [
-        Center(
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: SizeConfig.safeBlockVertical * 2,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(3.0), //or 15.0
-              child: Container(
-                height: SizeConfig.safeBlockVertical * 20,
-                width: SizeConfig.safeBlockHorizontal * 30,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.purple,
-                      Colors.deepPurple,
-                    ],
-                    begin: Alignment.bottomRight,
-                    end: Alignment.topLeft,
-                  ),
-                ),
-                child: SizedBox(
-                  height: SizeConfig.safeBlockVertical * 10,
-                  width: SizeConfig.safeBlockHorizontal * 10,
-                  child: Observer(
-                    builder: (_) => Image(
-                      fit: BoxFit.cover,
-                      image: _imageFile.value != null
-                          ? Image.file(
-                              _imageFile.value!,
-                            ).image
-                          : AssetImage(
-                              "assets/images/${_userDetails.gender != null ? '${UserGender.values[_userDetails.gender!.index].name}-user' : 'male-user'}.png"),
-                    ),
-                  ),
-                ),
+  Future<void> getBackgroundProfileImageFile(
+      String? userBackgroundProfileImageFilePath) async {
+    if (userBackgroundProfileImageFilePath != null) {
+      _backgroundImageFile.value = await ImagePickerHelper.getFileFromExStorage(
+          userBackgroundProfileImageFilePath,
+          ImagePickerHelper.getBackgroundProfileImageFilesPath());
+    }
+  }
+
+  manageFiles(BuildContext context, ValueNotifier<File?> fileToSet) {
+    BuildContext dialogContext;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        dialogContext = context;
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(
+                10.0,
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(
-            top: SizeConfig.safeBlockVertical * 16,
-            left: SizeConfig.safeBlockHorizontal * 13,
+          contentPadding: EdgeInsets.symmetric(
+            vertical: SizeConfig.safeBlockVertical * 1,
+            horizontal: SizeConfig.safeBlockHorizontal * 2,
           ),
-          child: Center(
-            child: CircleAvatar(
-              radius: 15.0,
-              backgroundColor: isDarkTheme ? Colors.grey[850] : Colors.grey[50],
-              child: IconButton(
-                iconSize: 15.0,
-                icon: Icon(
-                  Icons.photo_camera,
-                  color: isDarkTheme ? Colors.grey[50] : Colors.grey[850],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              GradientElevatedButton(
+                gradient: const LinearGradient(
+                  colors: [
+                    Colors.purple,
+                    Colors.deepPurple,
+                  ],
+                  begin: Alignment.bottomRight,
+                  end: Alignment.topLeft,
                 ),
+                child: AnimatedBuilder(
+                    animation: _camLoading,
+                    builder: (context, _) {
+                      return _camLoading.value
+                          ? LoadingHelper.showButtonLoading()
+                          : Text(
+                              "Choose gallery image",
+                              style: TextStyle(
+                                color: Colors.grey[50],
+                              ),
+                            );
+                    }),
                 onPressed: () {
-                  BuildContext dialogContext;
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        dialogContext = context;
-                        return AlertDialog(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(
-                                10.0,
-                              ),
-                            ),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: SizeConfig.safeBlockVertical * 1,
-                            horizontal: SizeConfig.safeBlockHorizontal * 2,
-                          ),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: <Widget>[
-                              RaisedGradientButton(
-                                height: SizeConfig.safeBlockVertical * 5,
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Colors.purple,
-                                    Colors.deepPurple,
-                                  ],
-                                  begin: Alignment.bottomRight,
-                                  end: Alignment.topLeft,
-                                ),
-                                child: AnimatedBuilder(
-                                    animation: _camLoading,
-                                    builder: (context, _) {
-                                      return _camLoading.value
-                                          ? LoadingHelper.showButtonLoading()
-                                          : const Text(
-                                              "Choose gallery image",
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                              ),
-                                            );
-                                    }),
-                                onPressed: () {
-                                  _camLoading.value = !_camLoading.value;
+                  _camLoading.value = !_camLoading.value;
 
-                                  ImagePickerHelper.getFromGallery()
-                                      .then((value) {
-                                    if (value != null) {
-                                      _imageFile.value = value;
-                                    }
-                                  }).whenComplete(() {
-                                    _camLoading.value = !_camLoading.value;
-                                    NavigatorHelper().popRoute(dialogContext);
-                                  });
-                                },
-                              ),
-                              OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                        width: 1,
-                                        color: Colors.red,
-                                        style: BorderStyle.solid)),
-                                child: AnimatedBuilder(
-                                    animation: _camLoading,
-                                    builder: (context, _) {
-                                      return _camLoading.value
-                                          ? LoadingHelper.showButtonLoading()
-                                          : const Text(
-                                              "Remove profile image",
-                                              style: TextStyle(
-                                                color: Colors.red,
-                                              ),
-                                            );
-                                    }),
-                                onPressed: () {
-                                  _imageFile.value = null;
-                                  NavigatorHelper().popRoute(dialogContext);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      });
+                  ImagePickerHelper.getFromGallery().then((value) {
+                    if (value != null) {
+                      fileToSet.value = value;
+                    }
+                  }).whenComplete(() {
+                    _camLoading.value = !_camLoading.value;
+                    NavigatorHelper().popRoute(dialogContext);
+                  });
                 },
               ),
-            ),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                        width: 1, color: Colors.red, style: BorderStyle.solid)),
+                child: AnimatedBuilder(
+                    animation: _camLoading,
+                    builder: (context, _) {
+                      return _camLoading.value
+                          ? LoadingHelper.showButtonLoading()
+                          : const Text(
+                              "Remove image",
+                              style: TextStyle(
+                                color: Colors.red,
+                              ),
+                            );
+                    }),
+                onPressed: () {
+                  fileToSet.value = null;
+                  NavigatorHelper().popRoute(dialogContext);
+                },
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

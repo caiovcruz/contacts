@@ -1,3 +1,5 @@
+import 'package:contacts/helpers/size_config.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class NavigatorHelper {
@@ -31,6 +33,20 @@ class NavigatorHelper {
 
   popRoute(BuildContext context) {
     Navigator.of(context).pop();
+
+    return this;
+  }
+
+  showPageModal(BuildContext context, Widget page) {
+    SizeConfig().init(context);
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => SizedBox(
+        height: SizeConfig.screenHeight - SizeConfig.screenHeight * .15,
+        child: page,
+      ),
+    );
 
     return this;
   }

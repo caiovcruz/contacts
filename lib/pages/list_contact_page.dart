@@ -27,9 +27,9 @@ class _ListContactPageState extends State<ListContactPage> {
   late ContactDao _contactDao;
   late TextEditingController _searchController;
   late ValueNotifier<bool> _addLoading;
-  late ValueNotifier<List<Contact>?> _contacts;
+  late ValueNotifier<List<Contact>> _contacts;
   late ValueNotifier<bool> _contactsLoaded;
-  late ValueNotifier<List<Contact>?> _listedContacts;
+  late ValueNotifier<List<Contact>> _listedContacts;
 
   @override
   void initState() {
@@ -37,9 +37,9 @@ class _ListContactPageState extends State<ListContactPage> {
     _contactDao = ContactDao();
     _searchController = TextEditingController();
     _addLoading = ValueNotifier<bool>(false);
-    _contacts = ValueNotifier<List<Contact>?>(null);
+    _contacts = ValueNotifier<List<Contact>>([]);
     _contactsLoaded = ValueNotifier<bool>(false);
-    _listedContacts = ValueNotifier<List<Contact>?>(null);
+    _listedContacts = ValueNotifier<List<Contact>>([]);
 
     loadContacts();
   }
@@ -60,101 +60,113 @@ class _ListContactPageState extends State<ListContactPage> {
           vertical: SizeConfig.safeBlockVertical * 3,
           horizontal: SizeConfig.safeBlockVertical * 3,
         ),
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: "Search",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: const BorderSide(color: Colors.red),
-                ),
-              ),
-              onChanged: searchContact,
-            ),
-            Expanded(
-              child: ValueListenableBuilder(
-                  valueListenable: _contactsLoaded,
-                  builder: (context, contactsLoaded, _) {
-                    return _contactsLoaded.value
-                        ? ValueListenableBuilder(
-                            valueListenable: _listedContacts,
-                            builder: (context, contacts, _) {
-                              if (_listedContacts.value != null) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    top: SizeConfig.safeBlockVertical * 2,
+        child: ValueListenableBuilder(
+          valueListenable: _contactsLoaded,
+          builder: (context, contactsLoaded, _) {
+            return Column(
+              children: [
+                _contactsLoaded.value
+                    ? ValueListenableBuilder(
+                        valueListenable: _contacts,
+                        builder: (context, contacts, _) {
+                          return _contacts.value.isNotEmpty
+                              ? TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    prefixIcon: const Icon(Icons.search),
+                                    hintText: "Search",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      borderSide:
+                                          const BorderSide(color: Colors.red),
+                                    ),
                                   ),
-                                  child: RefreshIndicator(
-                                    onRefresh: loadContacts,
-                                    child: ListView.separated(
-                                        itemBuilder: (context, index) {
-                                          final Contact contact =
-                                              _listedContacts.value![index];
-                                          return DecoratedBox(
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(10.0),
-                                                gradient: const LinearGradient(
-                                                    colors: [
-                                                      Colors.deepPurple,
-                                                      Colors.purple
-                                                    ])),
-                                            child: ListTile(
-                                              textColor: Colors.grey[50],
-                                              onTap: () =>
-                                                  editContact(context, contact),
-                                              leading: CircleAvatar(
-                                                backgroundColor:
-                                                    Colors.grey[50],
-                                                child: ContactTypeHelper
-                                                    .getIconByContactType(
-                                                        contact.type!),
-                                              ),
-                                              title: Text(contact.name!),
-                                              subtitle: Text(contact.phone!),
-                                              trailing: IconButton(
-                                                icon: Icon(
-                                                  Icons.call,
-                                                  color: Colors.grey[50],
-                                                ),
-                                                onPressed: () => {},
-                                              ),
+                                  onChanged: searchContact,
+                                )
+                              : Container();
+                        },
+                      )
+                    : Container(),
+                Expanded(
+                  child: _contactsLoaded.value
+                      ? ValueListenableBuilder(
+                          valueListenable: _listedContacts,
+                          builder: (context, contacts, _) {
+                            if (_listedContacts.value.isNotEmpty) {
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  top: SizeConfig.safeBlockVertical * 2,
+                                ),
+                                child: RefreshIndicator(
+                                  onRefresh: loadContacts,
+                                  child: ListView.separated(
+                                      itemBuilder: (context, index) {
+                                        final Contact contact =
+                                            _listedContacts.value[index];
+                                        return DecoratedBox(
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                              gradient: const LinearGradient(
+                                                  colors: [
+                                                    Colors.deepPurple,
+                                                    Colors.purple
+                                                  ])),
+                                          child: ListTile(
+                                            textColor: Colors.grey[50],
+                                            onTap: () =>
+                                                editContact(context, contact),
+                                            leading: CircleAvatar(
+                                              backgroundColor: Colors.grey[50],
+                                              child: ContactTypeHelper
+                                                  .getIconByContactType(
+                                                      contact.type!),
                                             ),
-                                          );
-                                        },
-                                        separatorBuilder: (context, index) =>
-                                            const Divider(
-                                              color: Colors.transparent,
+                                            title: Text(contact.name!),
+                                            subtitle: Text(contact.phone!),
+                                            trailing: IconButton(
+                                              icon: Icon(
+                                                Icons.call,
+                                                color: Colors.grey[50],
+                                              ),
+                                              onPressed: () => {},
                                             ),
-                                        itemCount:
-                                            _listedContacts.value!.length),
-                                  ),
-                                );
-                              }
-
-                              return Center(
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.mood_bad,
-                                        size: SizeConfig.safeBlockHorizontal * 10,
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(vertical: SizeConfig.safeBlockVertical * 2),
-                                        child: const Text("You don't have any contact yet..."),
-                                      )
-                                    ]),
+                                          ),
+                                        );
+                                      },
+                                      separatorBuilder: (context, index) =>
+                                          const Divider(
+                                            color: Colors.transparent,
+                                          ),
+                                      itemCount: _listedContacts.value.length),
+                                ),
                               );
-                            },
-                          )
-                        : LoadingHelper.showLoading();
-                  }),
-            ),
-          ],
+                            }
+
+                            return Center(
+                              child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.mood_bad,
+                                      size: SizeConfig.safeBlockHorizontal * 10,
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical:
+                                              SizeConfig.safeBlockVertical * 2),
+                                      child: const Text(
+                                          "You don't have any contact yet..."),
+                                    )
+                                  ]),
+                            );
+                          },
+                        )
+                      : LoadingHelper.showLoading(),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -170,7 +182,7 @@ class _ListContactPageState extends State<ListContactPage> {
   }
 
   void addNewContact(BuildContext context) {
-    NavigatorHelper().navigateToWidget(context, ContactPage());
+    NavigatorHelper().showPageModal(context, ContactPage());
   }
 
   void editContact(BuildContext context, contact) {
@@ -194,14 +206,16 @@ class _ListContactPageState extends State<ListContactPage> {
 
   void searchContact(String value) {
     if (value.isNotEmpty) {
-      _listedContacts.value = _contacts.value?.where((contact) {
-        final contactName = contact.name?.toLowerCase();
-        final contactPhone = contact.phone?.toLowerCase();
-        final input = value.toLowerCase();
+      _listedContacts.value = _contacts.value.where(
+        (contact) {
+          final contactName = contact.name?.toLowerCase();
+          final contactPhone = contact.phone?.toLowerCase();
+          final input = value.toLowerCase();
 
-        return (contactName?.contains(input) ?? false) ||
-            (contactPhone?.contains(input) ?? false);
-      }).toList();
+          return (contactName?.contains(input) ?? false) ||
+              (contactPhone?.contains(input) ?? false);
+        },
+      ).toList();
     } else {
       _listedContacts.value = _contacts.value;
     }

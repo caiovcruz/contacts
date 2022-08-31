@@ -7,12 +7,12 @@ import 'database.dart';
 class ContactDao {
   static const String tableSql = 'CREATE TABLE $_tableName('
       '$_id INTEGER PRIMARY KEY, '
-      '$_userId INTEGER, '
-      '$_name TEXT, '
-      '$_email TEXT, '
+      '$_userId INTEGER NOT NULL, '
+      '$_name TEXT NOT NULL, '
+      '$_email TEXT NOT NULL, '
       '$_cpf INTEGER, '
-      '$_phone TEXT, '
-      '$_type INT, '
+      '$_phone TEXT NOT NULL, '
+      '$_type INT NOT NULL, '
       'FOREIGN KEY($_userId) REFERENCES $_foreignUserTableName($_id) )';
 
   static const String _tableName = 'contacts';

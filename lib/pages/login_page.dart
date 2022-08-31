@@ -7,7 +7,7 @@ import 'package:form_field_validator/form_field_validator.dart';
 import '../helpers/encrypter_helper.dart';
 import '../helpers/navigator_helper.dart';
 import '../helpers/size_config.dart';
-import '../widgets/raised_gradient_button.dart';
+import '../widgets/gradient_elevated_button.dart';
 import '../helpers/loading_helper.dart';
 import '../helpers/message_helper.dart';
 import '../helpers/secure_storage_helper.dart';
@@ -156,42 +156,38 @@ class _LoginPageState extends State<LoginPage> {
                         padding: EdgeInsets.symmetric(
                             vertical: SizeConfig.safeBlockVertical * 2),
                         child: AnimatedBuilder(
-                            animation: _savePassword,
-                            builder: (context, _) {
-                              return CheckboxListTile(
-                                contentPadding: EdgeInsets.zero,
-                                activeColor: Colors.purple,
-                                value: _savePassword.value,
-                                onChanged: (_) =>
-                                    _savePassword.value = !_savePassword.value,
-                                title: const Text("Remember me"),
-                              );
-                            }),
-                      ),
-                      RaisedGradientButton(
-                        height: SizeConfig.safeBlockVertical * 8,
-                        gradient: const LinearGradient(
-                          colors: [
-                            Colors.purple,
-                            Colors.deepPurple,
-                          ],
-                          begin: Alignment.bottomRight,
-                          end: Alignment.topLeft,
+                          animation: _savePassword,
+                          builder: (context, _) {
+                            return CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              activeColor: Colors.purple,
+                              value: _savePassword.value,
+                              onChanged: (_) =>
+                                  _savePassword.value = !_savePassword.value,
+                              title: const Text("Remember me"),
+                            );
+                          },
                         ),
+                      ),
+                      GradientElevatedButton(
                         onPressed: () => signIn(),
                         child: AnimatedBuilder(
-                            animation: _signInloading,
-                            builder: (context, _) {
-                              return _signInloading.value
+                          animation: _signInloading,
+                          builder: (context, _) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: _signInloading.value
                                   ? LoadingHelper.showButtonLoading()
-                                  : const Text(
+                                  : Text(
                                       'Sign In',
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: Colors.grey[50],
                                         fontSize: 25.0,
                                       ),
-                                    );
-                            }),
+                                    ),
+                            );
+                          },
+                        ),
                       ),
                       SizedBox(
                         height: SizeConfig.safeBlockVertical * 2,
@@ -241,20 +237,22 @@ class _LoginPageState extends State<LoginPage> {
 
       _userLogin.password = EncrypterHelper.encrypt(_userLogin.password!);
 
-      _userDao.signIn(_userLogin).then((userSignedIn) {
-        if (userSignedIn != null) {
-          saveToSecureStorage(userSignedIn).then((_) => NavigatorHelper()
-              .navigateToWidget(context, const ListContactPage(),
-                  removeUntil: true));
-        } else {
-          _signInloading.value = !_signInloading.value;
+      _userDao.signIn(_userLogin).then(
+        (userSignedIn) {
+          if (userSignedIn != null) {
+            saveToSecureStorage(userSignedIn).then((_) => NavigatorHelper()
+                .navigateToWidget(context, const ListContactPage(),
+                    removeUntil: true));
+          } else {
+            _signInloading.value = !_signInloading.value;
 
-          MessageHelper.showErrorMessage(
-            context,
-            "User email or password incorrect!",
-          );
-        }
-      });
+            MessageHelper.showErrorMessage(
+              context,
+              "User email or password incorrect!",
+            );
+          }
+        },
+      );
     }
   }
 
